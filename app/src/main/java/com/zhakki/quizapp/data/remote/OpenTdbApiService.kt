@@ -13,7 +13,8 @@ interface OpenTdbApiService {
 
     @GET("api_token.php")
     suspend fun getSessionToken(
-        @Query("command") command: String = "request"
+        @Query("command") command: String = "request",
+        @Query("token") token: String? = null
     ): TokenResponse
 
     @GET("api.php")
