@@ -7,18 +7,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import com.zhakki.quizapp.data.repository.QuizRepository
 
-
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val repository: QuizRepository = QuizRepository()
+            val localDataSource = (application as QuizApplication).localDataSource
+            val repository = QuizRepository(localDataSource)
+            
             LaunchedEffect(Unit) {
-                repository.getToken()
+                repository.getQuestions(10)
             }
             Text("Quiz App")
-
         }
     }
 }

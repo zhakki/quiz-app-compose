@@ -18,7 +18,8 @@ class QuizApplication : Application() {
     val localDataSource: LocalDataSource by lazy {
         LocalDataSource(
             questionDao = database.questionDao(),
-            gameResultDao = database.gameResultDao()
+            gameResultDao = database.gameResultDao(),
+            tokenDao = database.tokenDao()
         )
     }
 }
