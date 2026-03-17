@@ -55,6 +55,7 @@ class QuizRepository(
             amount = amount,
             category = category,
             difficulty = difficulty,
+            type = "multiple", // Ülesanne ütleb "Kuvatakse küsimus ja 4 vastusevarianti" e. alati "Multiple Choice"
             token = token
         )
 
