@@ -5,6 +5,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zhakki.quizapp.ui.StartScreen
+import com.zhakki.quizapp.ui.QuizScreen
+import com.zhakki.quizapp.ui.ResultScreen
 
 @Composable
 fun NavGraph() {
@@ -22,12 +24,26 @@ fun NavGraph() {
             )
         }
 
+        var finalScore = 0
+
         composable(Routes.QUIZ) {
-            // QuizScreen()
+            QuizScreen(
+                onFinishClick = { score ->
+                    finalScore = score
+                    navController.navigate(Routes.RESULT)
+                }
+            )
         }
 
         composable(Routes.RESULT) {
-            // ResultScreen()
+            ResultScreen(
+                score = finalScore,
+                onRestartClick = {
+                    navController.navigate(Routes.START) {
+                        popUpTo(Routes.START) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
