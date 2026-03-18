@@ -1,5 +1,6 @@
 package com.zhakki.quizapp.data.repository
 
+import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.LocalDataSource
 import com.zhakki.quizapp.data.local.QuestionEntity
 import com.zhakki.quizapp.data.local.QuizStateEntity
@@ -132,5 +133,9 @@ class QuizRepository(
 
     suspend fun clearQuizState() {
         localDataSource.clearQuizState()
+    }
+
+    suspend fun saveGameResult(result: GameResultEntity) {
+        localDataSource.saveGameResult(result)
     }
 }

@@ -2,6 +2,7 @@ package com.zhakki.quizapp.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.QuestionEntity
 import com.zhakki.quizapp.data.local.QuizStateEntity
 import com.zhakki.quizapp.data.model.Category
@@ -12,6 +13,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class QuizUiState(
     val categories: List<Category> = emptyList(),
@@ -152,19 +156,25 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             val nextIndex = state.currentQuestionIndex + 1
             val isFinished = nextIndex >= state.totalQuestions
 
-            val newState = QuizStateEntity(
-                currentQuestionIndex = nextIndex,
-                totalQuestions = state.totalQuestions,
-                correctAnswersCount = newCorrectCount,
-                isFinished = isFinished
-            )
-            
-            repository.updateQuizState(newState)
-            
-            if (!isFinished) {
-                loadQuestion(nextIndex)
-            } else {
+            if (isFinished) {
+                val result = GameResultEntity(
+                    date = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date()),
+                    category = currentQuestion.category,
+                    score = newCorrectCount,
+                    totalQuestions = state.totalQuestions
+                )
+                repository.saveGameResult(result)
+                repository.clearQuizState()
                 _uiState.update { it.copy(isFinished = true, correctAnswersCount = newCorrectCount) }
+            } else {
+                val newState = QuizStateEntity(
+                    currentQuestionIndex = nextIndex,
+                    totalQuestions = state.totalQuestions,
+                    correctAnswersCount = newCorrectCount,
+                    isFinished = false
+                )
+                repository.updateQuizState(newState)
+                loadQuestion(nextIndex)
             }
         }
     }
