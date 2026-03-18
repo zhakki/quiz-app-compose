@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
-import java.util.UUID
 
 class QuizRepository(
     private val localDataSource: LocalDataSource
@@ -64,7 +63,7 @@ class QuizRepository(
         }
     }
 
-    suspend fun getQuestions(amount: Int, category: Int? = null, difficulty: String? = null) {
+    suspend fun getQuestions(amount: Int, category: Int? = null, difficulty: String? = null): List<QuestionEntity> {
         val token = getToken()
         var response = apiService.getQuestions(
             amount = amount,
@@ -75,12 +74,12 @@ class QuizRepository(
         )
 
         // Käitleme erinevad veakoodid vastavalt OpenTDB dokumentatsioonile
-        when (response.responseCode) {
+        return when (response.responseCode) {
             0 -> {
                 // Success: Salvestame küsimused lokaalsesse baasi
-                val entities = response.results.map { q ->
+                val entities = response.results.mapIndexed { index, q ->
                     QuestionEntity(
-                        id = UUID.randomUUID().toString(),
+                        id = index, // Kasutame indeksit järjekorrana
                         category = q.category,
                         difficulty = q.difficulty,
                         questionText = q.question,
@@ -92,15 +91,14 @@ class QuizRepository(
                 }
                 localDataSource.clearQuestions()
                 localDataSource.saveQuestions(entities)
+                entities
             }
             1 -> {
                 // No Results: API-l pole piisavalt küsimusi selle päringu jaoks.
-                // Proovime uuesti ilma kategooriata või vähema kogusega (siin näites viskame vea)
                 throw Exception("API-l pole piisavalt küsimusi selle valiku jaoks.")
             }
             3 -> {
                 // Token Not Found: Sessiooni token on vale või aegunud.
-                // Küsime uue tokeni ja proovime uuesti.
                 localDataSource.clearToken()
                 getQuestions(amount, category, difficulty)
             }
@@ -114,6 +112,7 @@ class QuizRepository(
                 delay(5000)
                 getQuestions(amount, category, difficulty)
             }
+            else -> emptyList()
         }
     }
 }
