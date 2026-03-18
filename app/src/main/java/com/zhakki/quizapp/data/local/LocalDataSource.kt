@@ -16,6 +16,10 @@ class LocalDataSource(
         return questionDao.getQuestionsByCategory(category)
     }
 
+    suspend fun getQuestionById(id: Int): QuestionEntity? {
+        return questionDao.getQuestionById(id)
+    }
+
     suspend fun clearQuestions() {
         questionDao.clearAllQuestions()
     }
