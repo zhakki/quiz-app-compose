@@ -2,9 +2,11 @@ package com.zhakki.quizapp.data.repository
 
 import com.zhakki.quizapp.data.local.LocalDataSource
 import com.zhakki.quizapp.data.local.QuestionEntity
+import com.zhakki.quizapp.data.local.QuizStateEntity
 import com.zhakki.quizapp.data.model.Category
 import com.zhakki.quizapp.data.remote.RetrofitClient.apiService
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -114,5 +116,21 @@ class QuizRepository(
             }
             else -> emptyList()
         }
+    }
+
+    suspend fun getQuestionById(id: Int): QuestionEntity? {
+        return localDataSource.getQuestionById(id)
+    }
+
+    suspend fun updateQuizState(state: QuizStateEntity) {
+        localDataSource.updateQuizState(state)
+    }
+
+    fun getQuizState(): Flow<QuizStateEntity?> {
+        return localDataSource.getQuizState()
+    }
+
+    suspend fun clearQuizState() {
+        localDataSource.clearQuizState()
     }
 }
