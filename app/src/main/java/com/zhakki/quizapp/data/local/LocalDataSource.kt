@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.Flow
 class LocalDataSource(
     private val questionDao: QuestionDao,
     private val gameResultDao: GameResultDao,
-    private val tokenDao: TokenDao
+    private val tokenDao: TokenDao,
+    private val quizStateDao: QuizStateDao
 ) {
 
     suspend fun saveQuestions(questions: List<QuestionEntity>) {
@@ -50,6 +51,18 @@ class LocalDataSource(
 
     suspend fun clearToken() {
         tokenDao.clearToken()
+    }
+
+    suspend fun updateQuizState(state: QuizStateEntity) {
+        quizStateDao.insertQuizState(state)
+    }
+
+    fun getQuizState(): Flow<QuizStateEntity?> {
+        return quizStateDao.getQuizState()
+    }
+
+    suspend fun clearQuizState() {
+        quizStateDao.clearQuizState()
     }
 
     private fun calculateExpiryTime(): Long {
