@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
                 LazyColumn {
                     items(categories) { category ->
                         Text(text = category.name)
+                        viewModel.amount
                     }
                 }
             }

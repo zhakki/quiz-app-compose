@@ -40,6 +40,19 @@ class QuizRepository(
         }
     }
 
+    suspend fun resetToken() {
+        val localTokenEntity = localDataSource.getToken().firstOrNull()
+        val token = localTokenEntity?.token
+        
+        if (token != null) {
+            val response = apiService.getSessionToken(command = "reset", token = token)
+            if (response.responseCode == 0) {
+                // Token resetiti edukalt, uuendame kohalikku andmebaasi uue aegumisajaga
+                localDataSource.updateToken(token)
+            }
+        }
+    }
+
     suspend fun fetchCategories() {
         try {
             val response = apiService.getCategories()
@@ -51,7 +64,7 @@ class QuizRepository(
 
     suspend fun getQuestions(amount: Int, category: Int? = null, difficulty: String? = null) {
         val token = getToken()
-        val response = apiService.getQuestions(
+        var response = apiService.getQuestions(
             amount = amount,
             category = category,
             difficulty = difficulty,
@@ -59,7 +72,20 @@ class QuizRepository(
             token = token
         )
 
+        if (response.responseCode == 4) { // Token Empty: Session Token has returned all possible questions for the specified query. Reset is required.
+            resetToken()
+            val newToken = getToken()
+            response = apiService.getQuestions(
+                amount = amount,
+                category = category,
+                difficulty = difficulty,
+                type = "multiple",
+                token = newToken
+            )
+        }
+
         if (response.responseCode == 0) {
+            // Edukas vastus
         }
     }
 }
