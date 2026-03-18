@@ -44,18 +44,30 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         // Jälgime viktoriini seisundit andmebaasist
         viewModelScope.launch {
             repository.getQuizState().collect { state ->
-                state?.let {
+                if (state != null) {
                     _uiState.update { currentState ->
                         currentState.copy(
-                            currentQuestionIndex = it.currentQuestionIndex,
-                            totalQuestions = it.totalQuestions,
-                            correctAnswersCount = it.correctAnswersCount,
-                            isFinished = it.isFinished
+                            currentQuestionIndex = state.currentQuestionIndex,
+                            totalQuestions = state.totalQuestions,
+                            correctAnswersCount = state.correctAnswersCount,
+                            isFinished = state.isFinished
                         )
                     }
                     // Laeme ka aktiivse küsimuse andmed
-                    if (!it.isFinished) {
-                        loadQuestion(it.currentQuestionIndex)
+                    if (!state.isFinished) {
+                        loadQuestion(state.currentQuestionIndex)
+                    }
+                } else {
+                    // Kui state on null, siis lähtestame UI mänguga seotud väljad
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            currentQuestion = null,
+                            currentAnswers = emptyList(),
+                            correctAnswersCount = 0,
+                            currentQuestionIndex = 0,
+                            totalQuestions = 0,
+                            isFinished = false
+                        )
                     }
                 }
             }
@@ -107,6 +119,12 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
+        }
+    }
+
+    fun cancelQuiz() {
+        viewModelScope.launch {
+            repository.clearQuizState()
         }
     }
 
