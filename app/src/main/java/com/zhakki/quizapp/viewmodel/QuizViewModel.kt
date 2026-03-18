@@ -82,7 +82,13 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
 
     private fun fetchCategories() {
         viewModelScope.launch {
-            repository.fetchCategories()
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                repository.fetchCategories()
+                _uiState.update { it.copy(isLoading = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Kategooriate laadimine ebaõnnestus") }
+            }
         }
     }
 
