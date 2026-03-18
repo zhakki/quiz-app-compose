@@ -1,6 +1,7 @@
 package com.zhakki.quizapp.data.repository
 
 import com.zhakki.quizapp.data.local.LocalDataSource
+import com.zhakki.quizapp.data.local.QuestionEntity
 import com.zhakki.quizapp.data.model.Category
 import com.zhakki.quizapp.data.remote.RetrofitClient.apiService
 import kotlinx.coroutines.delay
@@ -8,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import java.util.UUID
 
 class QuizRepository(
     private val localDataSource: LocalDataSource
@@ -27,7 +29,7 @@ class QuizRepository(
         // Token puudub või on aegunud, küsime uue
         var response = apiService.getSessionToken("request")
         
-        if (response.responseCode == 5) { // Code 5: Rate Limit Too many requests have occurred. Each IP can only access the API once every 5 seconds.
+        if (response.responseCode == 5) { // Code 5: Rate Limit
             delay(5000)
             response = apiService.getSessionToken("request")
         }
@@ -68,24 +70,50 @@ class QuizRepository(
             amount = amount,
             category = category,
             difficulty = difficulty,
-            type = "multiple", // Ülesanne ütleb "Kuvatakse küsimus ja 4 vastusevarianti" e. alati "Multiple Choice"
+            type = "multiple",
             token = token
         )
 
-        if (response.responseCode == 4) { // Token Empty: Session Token has returned all possible questions for the specified query. Reset is required.
-            resetToken()
-            val newToken = getToken()
-            response = apiService.getQuestions(
-                amount = amount,
-                category = category,
-                difficulty = difficulty,
-                type = "multiple",
-                token = newToken
-            )
-        }
-
-        if (response.responseCode == 0) {
-            // Edukas vastus
+        // Käitleme erinevad veakoodid vastavalt OpenTDB dokumentatsioonile
+        when (response.responseCode) {
+            0 -> {
+                // Success: Salvestame küsimused lokaalsesse baasi
+                val entities = response.results.map { q ->
+                    QuestionEntity(
+                        id = UUID.randomUUID().toString(),
+                        category = q.category,
+                        difficulty = q.difficulty,
+                        questionText = q.question,
+                        correctAnswer = q.correctAnswer,
+                        wrongAnswer1 = q.incorrectAnswers.getOrNull(0) ?: "",
+                        wrongAnswer2 = q.incorrectAnswers.getOrNull(1) ?: "",
+                        wrongAnswer3 = q.incorrectAnswers.getOrNull(2) ?: ""
+                    )
+                }
+                localDataSource.clearQuestions()
+                localDataSource.saveQuestions(entities)
+            }
+            1 -> {
+                // No Results: API-l pole piisavalt küsimusi selle päringu jaoks.
+                // Proovime uuesti ilma kategooriata või vähema kogusega (siin näites viskame vea)
+                throw Exception("API-l pole piisavalt küsimusi selle valiku jaoks.")
+            }
+            3 -> {
+                // Token Not Found: Sessiooni token on vale või aegunud.
+                // Küsime uue tokeni ja proovime uuesti.
+                localDataSource.clearToken()
+                getQuestions(amount, category, difficulty)
+            }
+            4 -> {
+                // Token Empty: Kõik küsimused on juba vastatud. Reset ja uus päring.
+                resetToken()
+                getQuestions(amount, category, difficulty)
+            }
+            5 -> {
+                // Rate Limit: Liiga palju päringuid. Ootame ja proovime uuesti.
+                delay(5000)
+                getQuestions(amount, category, difficulty)
+            }
         }
     }
 }
