@@ -12,13 +12,16 @@ class QuizApplication : Application() {
             applicationContext,
             AppDatabase::class.java,
             "quiz_database"
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 
     val localDataSource: LocalDataSource by lazy {
         LocalDataSource(
             questionDao = database.questionDao(),
-            gameResultDao = database.gameResultDao()
+            gameResultDao = database.gameResultDao(),
+            tokenDao = database.tokenDao(),
+            quizStateDao = database.quizStateDao()
         )
     }
 }

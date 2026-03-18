@@ -14,6 +14,9 @@ interface QuestionDao {
     @Query("SELECT * FROM questions WHERE category = :category")
     suspend fun getQuestionsByCategory(category: String): List<QuestionEntity>
 
+    @Query("SELECT * FROM questions WHERE id = :id")
+    suspend fun getQuestionById(id: Int): QuestionEntity?
+
     @Query("DELETE FROM questions")
     suspend fun clearAllQuestions()
 }
