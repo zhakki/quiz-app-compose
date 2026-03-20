@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.zhakki.quizapp.data.local.AppDatabase
 import com.zhakki.quizapp.data.local.LocalDataSource
+import com.zhakki.quizapp.data.repository.QuizRepository
 
 class QuizApplication : Application() {
 
@@ -23,5 +24,9 @@ class QuizApplication : Application() {
             tokenDao = database.tokenDao(),
             quizStateDao = database.quizStateDao()
         )
+    }
+
+    val repository: QuizRepository by lazy {
+        QuizRepository(localDataSource)
     }
 }

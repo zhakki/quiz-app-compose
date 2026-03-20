@@ -1,5 +1,6 @@
 package com.zhakki.quizapp.data.repository
 
+import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.LocalDataSource
 import com.zhakki.quizapp.data.local.QuestionEntity
 import com.zhakki.quizapp.data.local.QuizStateEntity
@@ -61,13 +62,22 @@ class QuizRepository(
             val response = apiService.getCategories()
             _categories.value = response.categories
         } catch (e: Exception) {
-            // Handle error (e.g., logging)
+            // Puudulik veahaldus: Vea ilmnemisel jääb _categories tühjaks ja kasutaja ei saa teada, mis valesti läks.
+            // Parem oleks visata erind edasi või kasutada Result tüüpi, et ViewModel saaks UI-s veateadet kuvada.
+            throw e 
         }
     }
 
-    suspend fun getQuestions(amount: Int, category: Int? = null, difficulty: String? = null): List<QuestionEntity> {
+    suspend fun getQuestions(
+        amount: Int, 
+        category: Int? = null, 
+        difficulty: String? = null,
+        retryCount: Int = 0 // Lisatud piirang korduvatele päringutele
+    ): List<QuestionEntity> {
+        if (retryCount > 3) throw Exception("Päring ebaõnnestus pärast mitut katset. Kontrolli võrguühendust.")
+
         val token = getToken()
-        var response = apiService.getQuestions(
+        val response = apiService.getQuestions(
             amount = amount,
             category = category,
             difficulty = difficulty,
@@ -75,7 +85,6 @@ class QuizRepository(
             token = token
         )
 
-        // Käitleme erinevad veakoodid vastavalt OpenTDB dokumentatsioonile
         return when (response.responseCode) {
             0 -> {
                 // Success: Salvestame küsimused lokaalsesse baasi
@@ -95,26 +104,23 @@ class QuizRepository(
                 localDataSource.saveQuestions(entities)
                 entities
             }
-            1 -> {
-                // No Results: API-l pole piisavalt küsimusi selle päringu jaoks.
-                throw Exception("API-l pole piisavalt küsimusi selle valiku jaoks.")
-            }
+            1 -> throw Exception("API-l pole piisavalt küsimusi selle valiku jaoks.")
             3 -> {
                 // Token Not Found: Sessiooni token on vale või aegunud.
                 localDataSource.clearToken()
-                getQuestions(amount, category, difficulty)
+                getQuestions(amount, category, difficulty, retryCount + 1)
             }
             4 -> {
                 // Token Empty: Kõik küsimused on juba vastatud. Reset ja uus päring.
                 resetToken()
-                getQuestions(amount, category, difficulty)
+                getQuestions(amount, category, difficulty, retryCount + 1)
             }
             5 -> {
                 // Rate Limit: Liiga palju päringuid. Ootame ja proovime uuesti.
                 delay(5000)
-                getQuestions(amount, category, difficulty)
+                getQuestions(amount, category, difficulty, retryCount + 1)
             }
-            else -> emptyList()
+            else -> throw Exception("Tundmatu viga API-st: ${response.responseCode}")
         }
     }
 
@@ -132,5 +138,9 @@ class QuizRepository(
 
     suspend fun clearQuizState() {
         localDataSource.clearQuizState()
+    }
+
+    suspend fun saveGameResult(result: GameResultEntity) {
+        localDataSource.saveGameResult(result)
     }
 }
