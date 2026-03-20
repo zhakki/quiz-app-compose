@@ -68,4 +68,20 @@ class LocalDataSource(
     private fun calculateExpiryTime(): Long {
         return System.currentTimeMillis() + (6 * 60 * 60 * 1000) // +6 hours in milliseconds
     }
+
+    suspend fun deleteGameResultById(id: Int) {
+        gameResultDao.deleteGameResultById(id)
+    }
+
+    suspend fun clearGameHistory() {
+        gameResultDao.clearGameHistory()
+    }
+
+    fun getTopResults(): Flow<List<GameResultEntity>> {
+        return gameResultDao.getTopResults()
+    }
+
+    suspend fun getAllQuestions(): List<QuestionEntity> {
+        return questionDao.getAllQuestions()
+    }
 }
