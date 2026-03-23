@@ -62,8 +62,6 @@ class QuizRepository(
             val response = apiService.getCategories()
             _categories.value = response.categories
         } catch (e: Exception) {
-            // Puudulik veahaldus: Vea ilmnemisel jääb _categories tühjaks ja kasutaja ei saa teada, mis valesti läks.
-            // Parem oleks visata erind edasi või kasutada Result tüüpi, et ViewModel saaks UI-s veateadet kuvada.
             throw e 
         }
     }
@@ -72,7 +70,7 @@ class QuizRepository(
         amount: Int, 
         category: Int? = null, 
         difficulty: String? = null,
-        retryCount: Int = 0 // Lisatud piirang korduvatele päringutele
+        retryCount: Int = 0 
     ): List<QuestionEntity> {
         if (retryCount > 3) throw Exception("Päring ebaõnnestus pärast mitut katset. Kontrolli võrguühendust.")
 
@@ -130,6 +128,10 @@ class QuizRepository(
 
     suspend fun updateQuizState(state: QuizStateEntity) {
         localDataSource.updateQuizState(state)
+    }
+
+    suspend fun markQuizAsFinished() {
+        localDataSource.markQuizAsFinished()
     }
 
     fun getQuizState(): Flow<QuizStateEntity?> {

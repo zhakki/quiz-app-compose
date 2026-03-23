@@ -57,6 +57,10 @@ class LocalDataSource(
         quizStateDao.insertQuizState(state)
     }
 
+    suspend fun markQuizAsFinished() {
+        quizStateDao.markAsFinished()
+    }
+
     fun getQuizState(): Flow<QuizStateEntity?> {
         return quizStateDao.getQuizState()
     }
