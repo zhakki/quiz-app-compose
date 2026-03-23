@@ -57,7 +57,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                             isFinished = state.isFinished
                         )
                     }
-                    // Laeme ka aktiivse küsimuse andmed
+                    // Laeme küsimuse andmed ainult siis, kui mäng pole lõpetatud
                     if (!state.isFinished) {
                         loadQuestion(state.currentQuestionIndex)
                     }
@@ -106,8 +106,21 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
 
     fun startQuiz() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            // Lähtestame UI oleku koheselt, et vältida eelmise mängu lõpuekraani kuvamist laadimise ajal
+            _uiState.update { it.copy(
+                isLoading = true, 
+                error = null, 
+                isFinished = false,
+                currentQuestionIndex = 0,
+                correctAnswersCount = 0,
+                currentQuestion = null,
+                currentAnswers = emptyList()
+            ) }
+            
             try {
+                // Enne uue mängu alustamist puhastame vana seisu andmebaasist
+                repository.clearQuizState()
+                
                 val state = _uiState.value
                 val questions = repository.getQuestions(
                     amount = state.amount,
@@ -163,6 +176,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             val isFinished = nextIndex >= state.totalQuestions
 
             if (isFinished) {
+                // Salvestame tulemuse ajalukku
                 val result = GameResultEntity(
                     date = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date()),
                     category = currentQuestion.category,
@@ -170,8 +184,22 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                     totalQuestions = state.totalQuestions
                 )
                 repository.saveGameResult(result)
-                repository.clearQuizState()
-                _uiState.update { it.copy(isFinished = true, correctAnswersCount = newCorrectCount) }
+                
+                // Märgime viktoriini lõpetatuks andmebaasis, aga ei kustuta seisu.
+                // Uuendame ka lõplikud arvud seisu tabelis.
+                repository.updateQuizState(QuizStateEntity(
+                    currentQuestionIndex = nextIndex,
+                    totalQuestions = state.totalQuestions,
+                    correctAnswersCount = newCorrectCount,
+                    isFinished = true
+                ))
+                
+                // Uuendame ka UI seisu, et tagada kohene tagasiside (currentQuestion jääb viimaseks vastatuks)
+                _uiState.update { it.copy(
+                    isFinished = true, 
+                    correctAnswersCount = newCorrectCount,
+                    currentQuestionIndex = nextIndex
+                ) }
             } else {
                 val newState = QuizStateEntity(
                     currentQuestionIndex = nextIndex,
