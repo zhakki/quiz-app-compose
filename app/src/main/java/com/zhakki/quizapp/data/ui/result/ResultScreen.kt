@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhakki.quizapp.viewmodel.QuizViewModel
+import androidx.compose.foundation.layout.safeDrawingPadding
 
 @Composable
 fun ResultScreen(
@@ -22,9 +23,20 @@ fun ResultScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    val correct = uiState.correctAnswersCount
+    val total = uiState.totalQuestions
+
+    val resultMessage = when {
+        total == 0 -> "Tulemus puudub"
+        correct == total -> "Kõik vastused olid õiged!"
+        correct == 0 -> "Seekord ei tulnud ühtegi õiget vastust."
+        else -> "Õigeid vastuseid: $correct / $total"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .safeDrawingPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -34,8 +46,13 @@ fun ResultScreen(
         )
 
         Text(
-            text = "Õigeid vastuseid: ${uiState.correctAnswersCount} / ${uiState.totalQuestions}",
+            text = resultMessage,
             style = MaterialTheme.typography.titleLarge
+        )
+
+        Text(
+            text = "Punktid: $correct / $total",
+            style = MaterialTheme.typography.titleMedium
         )
 
         Text(
@@ -44,7 +61,10 @@ fun ResultScreen(
         )
 
         Button(
-            onClick = onPlayAgain,
+            onClick = {
+                viewModel.resetQuizUi()
+                onPlayAgain()
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Tagasi algusesse")
