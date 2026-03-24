@@ -1,10 +1,12 @@
 package com.zhakki.quizapp.data.ui.result
 
+import android.text.Html
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,6 +16,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhakki.quizapp.viewmodel.QuizViewModel
+
+private fun decodeHtml(text: String): String {
+    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+}
 
 @Composable
 fun ResultScreen(
@@ -25,6 +31,7 @@ fun ResultScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .safeDrawingPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -39,12 +46,22 @@ fun ResultScreen(
         )
 
         Text(
-            text = "Kategooria: ${uiState.selectedCategory?.name ?: "-"}",
+            text = "Punktid: ${uiState.correctAnswersCount} / ${uiState.totalQuestions}",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Text(
+            text = "Kategooria: ${
+                decodeHtml(uiState.selectedCategory?.name ?: uiState.currentQuestion?.category ?: "-")
+            }",
             style = MaterialTheme.typography.titleMedium
         )
 
         Button(
-            onClick = onPlayAgain,
+            onClick = {
+                viewModel.resetQuizUi()
+                onPlayAgain()
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Tagasi algusesse")

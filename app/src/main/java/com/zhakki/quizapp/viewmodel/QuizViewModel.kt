@@ -37,15 +37,22 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
+    private val _gameHistory = MutableStateFlow<List<GameResultEntity>>(emptyList())
+    val gameHistory: StateFlow<List<GameResultEntity>> = _gameHistory.asStateFlow()
+
     init {
-        // Jälgime kategooriaid repositooriumist
         viewModelScope.launch {
             repository.categories.collect { categories ->
                 _uiState.update { it.copy(categories = categories) }
             }
         }
-        
-        // Jälgime viktoriini seisundit andmebaasist
+
+        viewModelScope.launch {
+            repository.getGameHistory().collect { history ->
+                _gameHistory.value = history
+            }
+        }
+
         viewModelScope.launch {
             repository.getQuizState().collect { state ->
                 if (state != null) {
@@ -57,21 +64,24 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                             isFinished = state.isFinished
                         )
                     }
-                    // Laeme ka aktiivse küsimuse andmed
+
                     if (!state.isFinished) {
                         loadQuestion(state.currentQuestionIndex)
                     }
                 } else {
-                    // Kui state on null, siis lähtestame UI mänguga seotud väljad
                     _uiState.update { currentState ->
-                        currentState.copy(
-                            currentQuestion = null,
-                            currentAnswers = emptyList(),
-                            correctAnswersCount = 0,
-                            currentQuestionIndex = 0,
-                            totalQuestions = 0,
-                            isFinished = false
-                        )
+                        if (currentState.isFinished) {
+                            currentState
+                        } else {
+                            currentState.copy(
+                                currentQuestion = null,
+                                currentAnswers = emptyList(),
+                                correctAnswersCount = 0,
+                                currentQuestionIndex = 0,
+                                totalQuestions = 0,
+                                isFinished = false
+                            )
+                        }
                     }
                 }
             }
@@ -87,7 +97,12 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                 repository.fetchCategories()
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Kategooriate laadimine ebaõnnestus") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Kategooriate laadimine ebaõnnestus"
+                    )
+                }
             }
         }
     }
@@ -106,8 +121,22 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
 
     fun startQuiz() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    error = null,
+                    currentQuestion = null,
+                    currentAnswers = emptyList(),
+                    correctAnswersCount = 0,
+                    currentQuestionIndex = 0,
+                    totalQuestions = 0,
+                    isFinished = false
+                )
+            }
+
             try {
+                repository.clearQuizState()
+
                 val state = _uiState.value
                 val questions = repository.getQuestions(
                     amount = state.amount,
@@ -125,9 +154,15 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                     repository.updateQuizState(initialState)
                     loadQuestion(0)
                 }
+
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message
+                    )
+                }
             }
         }
     }
@@ -135,6 +170,21 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     fun cancelQuiz() {
         viewModelScope.launch {
             repository.clearQuizState()
+            resetQuizUi()
+        }
+    }
+
+    fun resetQuizUi() {
+        _uiState.update {
+            it.copy(
+                currentQuestion = null,
+                currentAnswers = emptyList(),
+                correctAnswersCount = 0,
+                currentQuestionIndex = 0,
+                totalQuestions = 0,
+                isFinished = false,
+                error = null
+            )
         }
     }
 
@@ -156,9 +206,10 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             val state = _uiState.value
             val currentQuestion = state.currentQuestion ?: return@launch
             val selectedAnswer = state.currentAnswers.getOrNull(answerIndex) ?: return@launch
-            
+
             val isCorrect = selectedAnswer == currentQuestion.correctAnswer
-            val newCorrectCount = if (isCorrect) state.correctAnswersCount + 1 else state.correctAnswersCount
+            val newCorrectCount =
+                if (isCorrect) state.correctAnswersCount + 1 else state.correctAnswersCount
             val nextIndex = state.currentQuestionIndex + 1
             val isFinished = nextIndex >= state.totalQuestions
 
@@ -169,9 +220,16 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                     score = newCorrectCount,
                     totalQuestions = state.totalQuestions
                 )
+
+                _uiState.update {
+                    it.copy(
+                        isFinished = true,
+                        correctAnswersCount = newCorrectCount
+                    )
+                }
+
                 repository.saveGameResult(result)
                 repository.clearQuizState()
-                _uiState.update { it.copy(isFinished = true, correctAnswersCount = newCorrectCount) }
             } else {
                 val newState = QuizStateEntity(
                     currentQuestionIndex = nextIndex,
