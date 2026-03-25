@@ -6,7 +6,7 @@ A simple Android app that uses the Trivia Quiz API as a source of quiz questions
 - choose the number of questions
 - uses a token to reduce the number of repeated questions
 - uses Room question cache
-- Uses Room for results history
+- uses Room for results history
 - a question and 4 answer options are displayed. The user receives points for choosing the correct answer.
 - at the end of the quiz, the number of correct answers and the score are displayed.
 - the quiz history is displayed: date, category, and result.
