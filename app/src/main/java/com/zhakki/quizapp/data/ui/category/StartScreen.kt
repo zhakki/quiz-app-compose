@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.viewmodel.QuizViewModel
+import androidx.compose.foundation.layout.safeDrawingPadding
 
 @Composable
 fun StartScreen(
@@ -36,7 +37,8 @@ fun StartScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .safeDrawingPadding()
+            .padding(18.dp)
     ) {
         Text(
             text = "Vali kategooria",

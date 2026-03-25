@@ -14,6 +14,9 @@ interface QuizStateDao {
     @Query("SELECT * FROM quiz_state WHERE id = 0")
     fun getQuizState(): Flow<QuizStateEntity?>
 
+    @Query("UPDATE quiz_state SET isFinished = 1 WHERE id = 0")
+    suspend fun markAsFinished()
+
     @Query("DELETE FROM quiz_state")
     suspend fun clearQuizState()
 }
