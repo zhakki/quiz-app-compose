@@ -149,4 +149,8 @@ class QuizRepository(
     fun getGameHistory(): Flow<List<GameResultEntity>> {
         return localDataSource.getGameHistory()
     }
+
+    suspend fun clearGameHistory() {
+        localDataSource.clearGameHistory()
+    }
 }
