@@ -1,10 +1,12 @@
 package com.zhakki.quizapp.data.ui.result
 
+import android.text.Html
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,7 +16,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhakki.quizapp.viewmodel.QuizViewModel
-import androidx.compose.foundation.layout.safeDrawingPadding
+
+private fun decodeHtml(text: String): String {
+    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+}
 
 @Composable
 fun ResultScreen(
@@ -22,16 +27,6 @@ fun ResultScreen(
     onPlayAgain: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    val correct = uiState.correctAnswersCount
-    val total = uiState.totalQuestions
-
-    val resultMessage = when {
-        total == 0 -> "Tulemus puudub"
-        correct == total -> "Kõik vastused olid õiged!"
-        correct == 0 -> "Seekord ei tulnud ühtegi õiget vastust."
-        else -> "Õigeid vastuseid: $correct / $total"
-    }
 
     Column(
         modifier = Modifier
@@ -46,17 +41,19 @@ fun ResultScreen(
         )
 
         Text(
-            text = resultMessage,
+            text = "Õigeid vastuseid: ${uiState.correctAnswersCount} / ${uiState.totalQuestions}",
             style = MaterialTheme.typography.titleLarge
         )
 
         Text(
-            text = "Punktid: $correct / $total",
+            text = "Punktid: ${uiState.correctAnswersCount} / ${uiState.totalQuestions}",
             style = MaterialTheme.typography.titleMedium
         )
 
         Text(
-            text = "Kategooria: ${uiState.selectedCategory?.name ?: "-"}",
+            text = "Kategooria: ${
+                decodeHtml(uiState.selectedCategory?.name ?: uiState.currentQuestion?.category ?: "-")
+            }",
             style = MaterialTheme.typography.titleMedium
         )
 

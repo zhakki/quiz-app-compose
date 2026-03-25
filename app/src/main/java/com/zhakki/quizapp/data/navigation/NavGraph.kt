@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zhakki.quizapp.data.ui.category.StartScreen
 import com.zhakki.quizapp.data.ui.game.QuizScreen
+import com.zhakki.quizapp.data.ui.history.HistoryScreen
 import com.zhakki.quizapp.data.ui.result.ResultScreen
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
@@ -24,6 +25,9 @@ fun AppNavGraph(
                 viewModel = quizViewModel,
                 onStartQuiz = {
                     navController.navigate(Routes.QUIZ)
+                },
+                onOpenHistory = {
+                    navController.navigate(Routes.HISTORY)
                 }
             )
         }
@@ -47,6 +51,15 @@ fun AppNavGraph(
                 viewModel = quizViewModel,
                 onPlayAgain = {
                     navController.popBackStack(Routes.START, false)
+                }
+            )
+        }
+
+        composable(Routes.HISTORY) {
+            HistoryScreen(
+                viewModel = quizViewModel,
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
