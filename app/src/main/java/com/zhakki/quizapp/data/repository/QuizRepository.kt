@@ -145,4 +145,8 @@ class QuizRepository(
     suspend fun saveGameResult(result: GameResultEntity) {
         localDataSource.saveGameResult(result)
     }
+
+    fun getGameHistory(): Flow<List<GameResultEntity>> {
+        return localDataSource.getGameHistory()
+    }
 }
