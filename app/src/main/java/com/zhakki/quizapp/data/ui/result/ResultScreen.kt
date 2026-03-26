@@ -1,20 +1,16 @@
 package com.zhakki.quizapp.data.ui.result
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.zhakki.quizapp.ui.result.ResultScreen as UiResultScreen
+import com.zhakki.quizapp.ui.result.ResultUiState
+import com.zhakki.quizapp.viewmodel.QuizUiState
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
+/**
+ * Адаптер: [QuizViewModel] → [ResultUiState] → UI [com.zhakki.quizapp.ui.result.ResultScreen].
+ */
 @Composable
 fun ResultScreen(
     viewModel: QuizViewModel,
@@ -22,32 +18,26 @@ fun ResultScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Tulemus",
-            style = MaterialTheme.typography.headlineLarge
-        )
+    UiResultScreen(
+        state = uiState.toResultUiState(),
+        onPlayAgain = onPlayAgain,
+        onBack = onPlayAgain,
+        onRetry = {}
+    )
+}
 
-        Text(
-            text = "Õigeid vastuseid: ${uiState.correctAnswersCount} / ${uiState.totalQuestions}",
-            style = MaterialTheme.typography.titleLarge
+private fun QuizUiState.toResultUiState(): ResultUiState {
+    return when {
+        isLoading && totalQuestions == 0 -> ResultUiState.Loading
+        error != null && totalQuestions == 0 && !isFinished ->
+            ResultUiState.Error(message = error.orEmpty())
+        totalQuestions == 0 -> ResultUiState.Empty
+        else -> ResultUiState.Content(
+            title = "Результат",
+            summary = "Верных ответов: $correctAnswersCount / $totalQuestions",
+            details = listOf(
+                "Категория" to (selectedCategory?.name ?: "—")
+            )
         )
-
-        Text(
-            text = "Kategooria: ${uiState.selectedCategory?.name ?: "-"}",
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Button(
-            onClick = onPlayAgain,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Tagasi algusesse")
-        }
     }
 }
