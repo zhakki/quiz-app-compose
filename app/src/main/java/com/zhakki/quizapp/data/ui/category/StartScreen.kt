@@ -1,5 +1,6 @@
 package com.zhakki.quizapp.data.ui.category
 
+import android.text.Html
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -21,10 +23,15 @@ import androidx.compose.ui.unit.dp
 import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
+private fun decodeHtml(text: String): String {
+    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+}
+
 @Composable
 fun StartScreen(
     viewModel: QuizViewModel,
-    onStartQuiz: () -> Unit
+    onStartQuiz: () -> Unit,
+    onOpenHistory: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -36,6 +43,7 @@ fun StartScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .safeDrawingPadding()
             .padding(16.dp)
     ) {
         Text(
@@ -58,7 +66,11 @@ fun StartScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isSelected) "✓ ${category.name}" else category.name
+                        text = if (isSelected) {
+                            "✓ ${decodeHtml(category.name)}"
+                        } else {
+                            decodeHtml(category.name)
+                        }
                     )
                 }
             }
@@ -123,6 +135,15 @@ fun StartScreen(
                 .padding(top = 16.dp)
         ) {
             Text(if (uiState.isLoading) "Laadimine..." else "Alusta mängu")
+        }
+
+        Button(
+            onClick = onOpenHistory,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            Text("Vaata mängu ajalugu")
         }
     }
 }
