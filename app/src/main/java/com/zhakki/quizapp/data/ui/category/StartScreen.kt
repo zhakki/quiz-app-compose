@@ -16,7 +16,8 @@ import com.zhakki.quizapp.viewmodel.QuizViewModel
 fun StartScreen(
     viewModel: QuizViewModel,
     onStartQuiz: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    onOpenLeaderboard: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

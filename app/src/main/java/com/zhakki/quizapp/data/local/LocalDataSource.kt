@@ -37,6 +37,10 @@ class LocalDataSource(
         return gameResultDao.getTopResultsByCategory(category)
     }
 
+    fun getBestResultsByCategory(): Flow<List<BestResult>> {
+        return gameResultDao.getBestResultsByCategory()
+    }
+
     fun getToken(): Flow<TokenEntity?> {
         return tokenDao.getToken()
     }
@@ -57,10 +61,6 @@ class LocalDataSource(
         quizStateDao.insertQuizState(state)
     }
 
-    suspend fun markQuizAsFinished() {
-        quizStateDao.markAsFinished()
-    }
-
     fun getQuizState(): Flow<QuizStateEntity?> {
         return quizStateDao.getQuizState()
     }
@@ -70,7 +70,7 @@ class LocalDataSource(
     }
 
     private fun calculateExpiryTime(): Long {
-        return System.currentTimeMillis() + (6 * 60 * 60 * 1000) // +6 hours in milliseconds
+        return System.currentTimeMillis() + (6 * 60 * 60 * 1000)
     }
 
     suspend fun deleteGameResultById(id: Int) {
@@ -87,5 +87,8 @@ class LocalDataSource(
 
     suspend fun getAllQuestions(): List<QuestionEntity> {
         return questionDao.getAllQuestions()
+    }
+    suspend fun markQuizAsFinished() {
+        quizStateDao.markQuizAsFinished()
     }
 }
