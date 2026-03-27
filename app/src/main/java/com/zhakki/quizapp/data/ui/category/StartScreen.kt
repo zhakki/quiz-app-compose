@@ -31,7 +31,8 @@ private fun decodeHtml(text: String): String {
 fun StartScreen(
     viewModel: QuizViewModel,
     onStartQuiz: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    onOpenLeaderboard: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -144,6 +145,14 @@ fun StartScreen(
                 .padding(top = 8.dp)
         ) {
             Text("Vaata mängu ajalugu")
+        }
+        Button(
+            onClick = onOpenLeaderboard,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            Text("Vaata edetabelit")
         }
     }
 }

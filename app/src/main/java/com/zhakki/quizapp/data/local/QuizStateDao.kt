@@ -19,4 +19,7 @@ interface QuizStateDao {
 
     @Query("DELETE FROM quiz_state")
     suspend fun clearQuizState()
+
+    @Query("UPDATE quiz_state SET isFinished = 1")
+    suspend fun markQuizAsFinished()
 }
