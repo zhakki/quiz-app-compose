@@ -6,7 +6,8 @@
         android:name=".QuizApplication"
         android:allowBackup="true"
         android:label="QuizAppCompose"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:theme="@style/Theme.QuizAppCompose">
 
         <activity
             android:name=".MainActivity"
