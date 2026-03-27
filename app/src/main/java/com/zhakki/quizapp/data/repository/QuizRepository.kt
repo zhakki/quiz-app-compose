@@ -1,5 +1,7 @@
 package com.zhakki.quizapp.data.repository
 
+import android.text.Html
+import androidx.core.text.HtmlCompat
 import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.LocalDataSource
 import com.zhakki.quizapp.data.local.QuestionEntity
@@ -66,6 +68,10 @@ class QuizRepository(
         }
     }
 
+    private fun decodeHtml(html: String): String {
+        return HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
+    }
+
     suspend fun getQuestions(
         amount: Int,
         category: Int? = null,
@@ -91,13 +97,13 @@ class QuizRepository(
                 val entities = response.results.mapIndexed { index, q ->
                     QuestionEntity(
                         id = index, // Kasutame indeksit järjekorrana
-                        category = q.category,
+                        category = decodeHtml(q.category),
                         difficulty = q.difficulty,
-                        questionText = q.question,
-                        correctAnswer = q.correctAnswer,
-                        wrongAnswer1 = q.incorrectAnswers.getOrNull(0) ?: "",
-                        wrongAnswer2 = q.incorrectAnswers.getOrNull(1) ?: "",
-                        wrongAnswer3 = q.incorrectAnswers.getOrNull(2) ?: ""
+                        questionText = decodeHtml(q.question),
+                        correctAnswer = decodeHtml(q.correctAnswer),
+                        wrongAnswer1 = decodeHtml(q.incorrectAnswers.getOrNull(0) ?: ""),
+                        wrongAnswer2 = decodeHtml(q.incorrectAnswers.getOrNull(1) ?: ""),
+                        wrongAnswer3 = decodeHtml(q.incorrectAnswers.getOrNull(2) ?: "")
                     )
                 }
                 localDataSource.clearQuestions()
