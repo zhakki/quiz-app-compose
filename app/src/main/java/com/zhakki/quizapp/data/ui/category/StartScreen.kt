@@ -15,7 +15,9 @@ import com.zhakki.quizapp.viewmodel.QuizViewModel
 @Composable
 fun StartScreen(
     viewModel: QuizViewModel,
-    onStartQuiz: () -> Unit
+    onStartQuiz: () -> Unit,
+    onOpenHistory: () -> Unit = {},
+    historyEnabled: Boolean = false
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -31,9 +33,9 @@ fun StartScreen(
             viewModel.startQuiz()
             onStartQuiz()
         },
-        onOpenHistory = {},
+        onOpenHistory = onOpenHistory,
         onOpenLeaderboard = {},
-        historyEnabled = false,
+        historyEnabled = historyEnabled,
         leaderboardEnabled = false,
         onRetry = {}
     )

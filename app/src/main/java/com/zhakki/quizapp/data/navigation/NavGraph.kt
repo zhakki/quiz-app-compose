@@ -28,7 +28,8 @@ fun AppNavGraph(
                 },
                 onOpenHistory = {
                     navController.navigate(Routes.HISTORY)
-                }
+                },
+                historyEnabled = true
             )
         }
 
