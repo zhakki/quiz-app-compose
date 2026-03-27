@@ -24,12 +24,14 @@ class QuizRepository(
         val currentTime = System.currentTimeMillis()
 
         if (localTokenEntity != null && currentTime < localTokenEntity.timestamp) {
+            // Token ok.
             return localTokenEntity.token
         }
 
+        // Token puudub või on aegunud, küsime uue
         var response = apiService.getSessionToken("request")
-
-        if (response.responseCode == 5) {
+        
+        if (response.responseCode == 5) { // Code 5: Rate Limit
             delay(5000)
             response = apiService.getSessionToken("request")
         }
@@ -49,6 +51,7 @@ class QuizRepository(
         if (token != null) {
             val response = apiService.getSessionToken(command = "reset", token = token)
             if (response.responseCode == 0) {
+                // Token resetiti edukalt, uuendame kohalikku andmebaasi uue aegumisajaga
                 localDataSource.updateToken(token)
             }
         }
@@ -84,9 +87,10 @@ class QuizRepository(
 
         return when (response.responseCode) {
             0 -> {
+                // Success: Salvestame küsimused lokaalsesse baasi
                 val entities = response.results.mapIndexed { index, q ->
                     QuestionEntity(
-                        id = index,
+                        id = index, // Kasutame indeksit järjekorrana
                         category = q.category,
                         difficulty = q.difficulty,
                         questionText = q.question,
@@ -103,16 +107,19 @@ class QuizRepository(
 
             1 -> throw Exception("API-l pole piisavalt küsimusi selle valiku jaoks.")
             3 -> {
+                // Token Not Found: Sessiooni token on vale või aegunud.
                 localDataSource.clearToken()
                 getQuestions(amount, category, difficulty, retryCount + 1)
             }
 
             4 -> {
+                // Token Empty: Kõik küsimused on juba vastatud. Reset ja uus päring.
                 resetToken()
                 getQuestions(amount, category, difficulty, retryCount + 1)
             }
 
             5 -> {
+                // Rate Limit: Liiga palju päringuid. Ootame ja proovime uuesti.
                 delay(5000)
                 getQuestions(amount, category, difficulty, retryCount + 1)
             }
@@ -129,6 +136,10 @@ class QuizRepository(
         localDataSource.updateQuizState(state)
     }
 
+    suspend fun markQuizAsFinished() {
+        localDataSource.markQuizAsFinished()
+    }
+
     fun getQuizState(): Flow<QuizStateEntity?> {
         return localDataSource.getQuizState()
     }
@@ -143,5 +154,9 @@ class QuizRepository(
 
     fun getGameHistory(): Flow<List<GameResultEntity>> {
         return localDataSource.getGameHistory()
+    }
+
+    suspend fun clearGameHistory() {
+        localDataSource.clearGameHistory()
     }
 }
