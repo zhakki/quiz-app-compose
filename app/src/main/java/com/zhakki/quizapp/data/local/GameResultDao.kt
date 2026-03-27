@@ -29,9 +29,17 @@ interface GameResultDao {
     suspend fun clearGameHistory()
 
     @Query("""
-    SELECT * FROM game_history
-    ORDER BY score DESC, id DESC
-    LIMIT 10
-""")
+        SELECT * FROM game_history
+        ORDER BY score DESC, id DESC
+        LIMIT 10
+    """)
     fun getTopResults(): Flow<List<GameResultEntity>>
+
+    @Query("""
+        SELECT category, MAX(score) AS bestScore
+        FROM game_history
+        GROUP BY category
+        ORDER BY bestScore DESC, category ASC
+    """)
+    fun getBestResultsByCategory(): Flow<List<BestResult>>
 }

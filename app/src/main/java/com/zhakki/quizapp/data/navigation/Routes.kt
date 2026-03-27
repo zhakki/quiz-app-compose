@@ -5,4 +5,5 @@ object Routes {
     const val QUIZ = "quiz"
     const val RESULT = "result"
     const val HISTORY = "history"
+    const val LEADERBOARD = "leaderboard"
 }

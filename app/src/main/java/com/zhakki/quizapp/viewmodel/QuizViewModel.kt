@@ -2,6 +2,7 @@ package com.zhakki.quizapp.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhakki.quizapp.data.local.BestResult
 import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.QuestionEntity
 import com.zhakki.quizapp.data.local.QuizStateEntity
@@ -40,6 +41,9 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     private val _gameHistory = MutableStateFlow<List<GameResultEntity>>(emptyList())
     val gameHistory: StateFlow<List<GameResultEntity>> = _gameHistory.asStateFlow()
 
+    private val _leaderboard = MutableStateFlow<List<BestResult>>(emptyList())
+    val leaderboard: StateFlow<List<BestResult>> = _leaderboard.asStateFlow()
+
     init {
         viewModelScope.launch {
             repository.categories.collect { categories ->
@@ -50,6 +54,12 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         viewModelScope.launch {
             repository.getGameHistory().collect { history ->
                 _gameHistory.value = history
+            }
+        }
+
+        viewModelScope.launch {
+            repository.getBestResultsByCategory().collect { results ->
+                _leaderboard.value = results
             }
         }
 
