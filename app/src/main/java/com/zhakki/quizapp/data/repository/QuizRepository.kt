@@ -1,6 +1,7 @@
 package com.zhakki.quizapp.data.repository
 
-import com.zhakki.quizapp.data.local.BestResult
+import android.text.Html
+import androidx.core.text.HtmlCompat
 import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.LocalDataSource
 import com.zhakki.quizapp.data.local.QuestionEntity
@@ -60,6 +61,10 @@ class QuizRepository(
         _categories.value = response.categories
     }
 
+    private fun decodeHtml(html: String): String {
+        return HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
+    }
+
     suspend fun getQuestions(
         amount: Int,
         category: Int? = null,
@@ -83,14 +88,14 @@ class QuizRepository(
             0 -> {
                 val entities = response.results.mapIndexed { index, q ->
                     QuestionEntity(
-                        id = index,
-                        category = q.category,
+                        id = index, // Kasutame indeksit järjekorrana
+                        category = decodeHtml(q.category),
                         difficulty = q.difficulty,
-                        questionText = q.question,
-                        correctAnswer = q.correctAnswer,
-                        wrongAnswer1 = q.incorrectAnswers.getOrNull(0) ?: "",
-                        wrongAnswer2 = q.incorrectAnswers.getOrNull(1) ?: "",
-                        wrongAnswer3 = q.incorrectAnswers.getOrNull(2) ?: ""
+                        questionText = decodeHtml(q.question),
+                        correctAnswer = decodeHtml(q.correctAnswer),
+                        wrongAnswer1 = decodeHtml(q.incorrectAnswers.getOrNull(0) ?: ""),
+                        wrongAnswer2 = decodeHtml(q.incorrectAnswers.getOrNull(1) ?: ""),
+                        wrongAnswer3 = decodeHtml(q.incorrectAnswers.getOrNull(2) ?: "")
                     )
                 }
 
@@ -150,9 +155,5 @@ class QuizRepository(
 
     suspend fun clearGameHistory() {
         localDataSource.clearGameHistory()
-    }
-
-    fun getBestResultsByCategory(): Flow<List<BestResult>> {
-        return localDataSource.getBestResultsByCategory()
     }
 }
