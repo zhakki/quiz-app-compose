@@ -33,6 +33,33 @@ class HistoryViewModel(private val repository: QuizRepository) : ViewModel() {
         initialValue = emptyList()
     )
 
+    /**
+     * Tagastab iga kategooria parima tulemuse (kõige suurem score).
+     */
+    val topScoresByCategory: StateFlow<Map<String, GameResultEntity>> = repository.getGameHistory()
+        .map { results ->
+            results.groupBy { it.category }
+                .mapValues { entry -> entry.value.maxByOrNull { it.score }!! }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyMap()
+        )
+
+    /**
+     * Tagastab iga kategooria parima tulemuse õigete vastuste suhte järgi (score / totalQuestions).
+     */
+    fun getBestResultByCategory(): Flow<Map<String, GameResultEntity>> {
+        return repository.getGameHistory()
+            .map { results ->
+                results.groupBy { it.category }
+                    .mapValues { entry ->
+                        entry.value.maxByOrNull { it.score.toDouble() / it.totalQuestions }!!
+                    }
+            }
+    }
+
     fun setCategoryFilter(category: String?) {
         _selectedCategory.value = category
     }
