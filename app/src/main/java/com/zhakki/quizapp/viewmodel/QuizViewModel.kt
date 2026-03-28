@@ -120,7 +120,8 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         }
     }
 
-    fun selectCategory(category: Category) {
+    fun selectCategory(categoryId: String) {
+        val category = _uiState.value.categories.find { it.id.toString() == categoryId }
         _uiState.update { it.copy(selectedCategory = category) }
     }
 

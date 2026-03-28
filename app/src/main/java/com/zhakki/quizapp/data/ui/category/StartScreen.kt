@@ -24,8 +24,7 @@ fun StartScreen(
     CategoryScreen(
         state = uiState.toCategoryUiState(),
         onCategoryClick = { id ->
-            val category = uiState.categories.find { it.id.toString() == id }
-            if (category != null) viewModel.selectCategory(category)
+            viewModel.selectCategory(id)
         },
         onDifficultySelected = { viewModel.selectDifficulty(it) },
         onAmountSelected = { viewModel.updateAmount(it) },
