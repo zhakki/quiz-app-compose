@@ -34,9 +34,9 @@ fun StartScreen(
             onStartQuiz()
         },
         onOpenHistory = onOpenHistory,
-        onOpenLeaderboard = {},
+        onOpenLeaderboard = onOpenLeaderboard,
         historyEnabled = true,
-        leaderboardEnabled = false,
+        leaderboardEnabled = true,
         onRetry = {}
     )
 }
