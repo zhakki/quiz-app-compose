@@ -11,6 +11,7 @@ import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.data.repository.QuizRepository
 import com.zhakki.quizapp.ui.category.CategoryItemUi
 import com.zhakki.quizapp.ui.category.CategoryUiState
+import com.zhakki.quizapp.ui.result.ResultUiState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -61,13 +62,22 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             initialValue = emptyList()
         )
 
-    // Kategooria valiku ekraani olek, tuletatud üldisest olekust
+    // Kategooria valiku ekraani olek
     val categoryUiState: StateFlow<CategoryUiState> = _uiState
         .map { state -> state.toCategoryUiState() }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = CategoryUiState.Loading
+        )
+
+    // Tulemuste ekraani olek
+    val resultUiState: StateFlow<ResultUiState> = _uiState
+        .map { state -> state.toResultUiState() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ResultUiState.Loading
         )
 
     init {
@@ -277,10 +287,6 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         ).filter { it.isNotEmpty() }.shuffled()
     }
 
-    /**
-     * Teisendab QuizUiState -> CategoryUiState.
-     * See loogika on siin, et hoida UI-kiht puhas.
-     */
     private fun QuizUiState.toCategoryUiState(): CategoryUiState {
         return when {
             isLoading && categories.isEmpty() -> CategoryUiState.Loading
@@ -297,6 +303,23 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                 inlineError = error?.takeIf { categories.isNotEmpty() },
                 canStart = selectedCategory != null && !isLoading,
                 isStartInProgress = isLoading
+            )
+        }
+    }
+
+    private fun QuizUiState.toResultUiState(): ResultUiState {
+        return when {
+            isLoading && totalQuestions == 0 -> ResultUiState.Loading
+            error != null && totalQuestions == 0 && !isFinished ->
+                ResultUiState.Error(message = error.orEmpty())
+            totalQuestions == 0 -> ResultUiState.Empty
+            else -> ResultUiState.Content(
+                title = "Result",
+                summary = "Correct answers: $correctAnswersCount / $totalQuestions",
+                details = listOf(
+                    "Category" to (selectedCategory?.name ?: "—"),
+                    "Difficulty" to selectedDifficulty.name
+                )
             )
         }
     }
