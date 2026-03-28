@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.zhakki.quizapp.data.navigation.AppNavGraph
+import com.zhakki.quizapp.navigation.AppNavGraph
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
 class MainActivity : ComponentActivity() {
