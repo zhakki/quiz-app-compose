@@ -1,5 +1,7 @@
 package com.zhakki.quizapp.data.repository
 
+import android.text.Html
+import androidx.core.text.HtmlCompat
 import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.LocalDataSource
 import com.zhakki.quizapp.data.local.QuestionEntity
@@ -55,12 +57,12 @@ class QuizRepository(
     }
 
     suspend fun fetchCategories() {
-        try {
-            val response = apiService.getCategories()
-            _categories.value = response.categories
-        } catch (e: Exception) {
-            throw e
-        }
+        val response = apiService.getCategories()
+        _categories.value = response.categories
+    }
+
+    private fun decodeHtml(html: String): String {
+        return HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
     }
 
     suspend fun getQuestions(
@@ -86,22 +88,24 @@ class QuizRepository(
             0 -> {
                 val entities = response.results.mapIndexed { index, q ->
                     QuestionEntity(
-                        id = index,
-                        category = q.category,
+                        id = index, // Kasutame indeksit järjekorrana
+                        category = decodeHtml(q.category),
                         difficulty = q.difficulty,
-                        questionText = q.question,
-                        correctAnswer = q.correctAnswer,
-                        wrongAnswer1 = q.incorrectAnswers.getOrNull(0) ?: "",
-                        wrongAnswer2 = q.incorrectAnswers.getOrNull(1) ?: "",
-                        wrongAnswer3 = q.incorrectAnswers.getOrNull(2) ?: ""
+                        questionText = decodeHtml(q.question),
+                        correctAnswer = decodeHtml(q.correctAnswer),
+                        wrongAnswer1 = decodeHtml(q.incorrectAnswers.getOrNull(0) ?: ""),
+                        wrongAnswer2 = decodeHtml(q.incorrectAnswers.getOrNull(1) ?: ""),
+                        wrongAnswer3 = decodeHtml(q.incorrectAnswers.getOrNull(2) ?: "")
                     )
                 }
+
                 localDataSource.clearQuestions()
                 localDataSource.saveQuestions(entities)
                 entities
             }
 
             1 -> throw Exception("API-l pole piisavalt küsimusi selle valiku jaoks.")
+
             3 -> {
                 localDataSource.clearToken()
                 getQuestions(amount, category, difficulty, retryCount + 1)
@@ -129,6 +133,10 @@ class QuizRepository(
         localDataSource.updateQuizState(state)
     }
 
+    suspend fun markQuizAsFinished() {
+        localDataSource.markQuizAsFinished()
+    }
+
     fun getQuizState(): Flow<QuizStateEntity?> {
         return localDataSource.getQuizState()
     }
@@ -143,5 +151,9 @@ class QuizRepository(
 
     fun getGameHistory(): Flow<List<GameResultEntity>> {
         return localDataSource.getGameHistory()
+    }
+
+    suspend fun clearGameHistory() {
+        localDataSource.clearGameHistory()
     }
 }

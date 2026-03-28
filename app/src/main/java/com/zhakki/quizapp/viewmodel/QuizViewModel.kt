@@ -2,16 +2,14 @@ package com.zhakki.quizapp.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhakki.quizapp.data.local.BestResult
 import com.zhakki.quizapp.data.local.GameResultEntity
 import com.zhakki.quizapp.data.local.QuestionEntity
 import com.zhakki.quizapp.data.local.QuizStateEntity
 import com.zhakki.quizapp.data.model.Category
 import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.data.repository.QuizRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -37,19 +35,34 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
-    private val _gameHistory = MutableStateFlow<List<GameResultEntity>>(emptyList())
-    val gameHistory: StateFlow<List<GameResultEntity>> = _gameHistory.asStateFlow()
+    // Mänguajalugu voona
+    val gameHistory: StateFlow<List<GameResultEntity>> = repository.getGameHistory()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    // Edetabel, tuletatud ajaloo põhjal
+    val leaderboard: StateFlow<List<BestResult>> = gameHistory
+        .map { history ->
+            history.groupBy { it.category }
+                .map { (category, results) ->
+                    val bestScore = results.maxOfOrNull { it.score } ?: 0
+                    BestResult(category, bestScore)
+                }
+                .sortedByDescending { it.bestScore }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     init {
         viewModelScope.launch {
             repository.categories.collect { categories ->
                 _uiState.update { it.copy(categories = categories) }
-            }
-        }
-
-        viewModelScope.launch {
-            repository.getGameHistory().collect { history ->
-                _gameHistory.value = history
             }
         }
 

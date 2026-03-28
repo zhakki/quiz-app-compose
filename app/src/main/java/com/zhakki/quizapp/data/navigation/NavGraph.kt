@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.zhakki.quizapp.data.ui.category.StartScreen
 import com.zhakki.quizapp.data.ui.game.QuizScreen
 import com.zhakki.quizapp.data.ui.history.HistoryScreen
+import com.zhakki.quizapp.data.ui.leaderboard.LeaderboardScreen
 import com.zhakki.quizapp.data.ui.result.ResultScreen
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
@@ -29,7 +30,9 @@ fun AppNavGraph(
                 onOpenHistory = {
                     navController.navigate(Routes.HISTORY)
                 },
-                historyEnabled = true
+                onOpenLeaderboard = {
+                    navController.navigate(Routes.LEADERBOARD)
+                }
             )
         }
 
@@ -58,6 +61,15 @@ fun AppNavGraph(
 
         composable(Routes.HISTORY) {
             HistoryScreen(
+                viewModel = quizViewModel,
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.LEADERBOARD) {
+            LeaderboardScreen(
                 viewModel = quizViewModel,
                 onBack = {
                     navController.popBackStack()
