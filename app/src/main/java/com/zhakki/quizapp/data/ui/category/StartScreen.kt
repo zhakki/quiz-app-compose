@@ -1,149 +1,62 @@
 package com.zhakki.quizapp.data.ui.category
 
-import android.text.Html
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.zhakki.quizapp.data.model.Difficulty
+import com.zhakki.quizapp.ui.category.CategoryItemUi
+import com.zhakki.quizapp.ui.category.CategoryScreen
+import com.zhakki.quizapp.ui.category.CategoryUiState
+import com.zhakki.quizapp.viewmodel.QuizUiState
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
-private fun decodeHtml(text: String): String {
-    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
-}
-
+/**
+ * Точка интеграции с [QuizViewModel]: маппинг состояния в [CategoryUiState] и вызовы ViewModel из коллбэков UI.
+ */
 @Composable
 fun StartScreen(
     viewModel: QuizViewModel,
     onStartQuiz: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    onOpenLeaderboard: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val categories = uiState.categories
-    val selectedCategory = uiState.selectedCategory
-    val selectedDifficulty = uiState.selectedDifficulty
-    val amount = uiState.amount
+    CategoryScreen(
+        state = uiState.toCategoryUiState(),
+        onCategoryClick = { id ->
+            val category = uiState.categories.find { it.id.toString() == id }
+            if (category != null) viewModel.selectCategory(category)
+        },
+        onDifficultySelected = { viewModel.selectDifficulty(it) },
+        onAmountSelected = { viewModel.updateAmount(it) },
+        onStartClick = {
+            viewModel.startQuiz()
+            onStartQuiz()
+        },
+        onOpenHistory = onOpenHistory,
+        onOpenLeaderboard = {},
+        historyEnabled = true,
+        leaderboardEnabled = false,
+        onRetry = {}
+    )
+}
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Vali kategooria",
-            style = MaterialTheme.typography.headlineSmall
+private fun QuizUiState.toCategoryUiState(): CategoryUiState {
+    return when {
+        isLoading && categories.isEmpty() -> CategoryUiState.Loading
+        error != null && categories.isEmpty() && !isLoading ->
+            CategoryUiState.Error(message = error.orEmpty())
+        !isLoading && categories.isEmpty() && error == null -> CategoryUiState.Empty
+        else -> CategoryUiState.Content(
+            title = "Choose a category",
+            categories = categories.map { CategoryItemUi(id = it.id.toString(), name = it.name) },
+            selectedCategoryId = selectedCategory?.id?.toString(),
+            selectedDifficulty = selectedDifficulty,
+            amount = amount,
+            amountOptions = listOf(5, 10, 15),
+            inlineError = error?.takeIf { categories.isNotEmpty() },
+            canStart = selectedCategory != null && !isLoading,
+            isStartInProgress = isLoading
         )
-
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .padding(top = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(bottom = 12.dp)
-        ) {
-            items(categories) { category ->
-                val isSelected = selectedCategory?.id == category.id
-
-                OutlinedButton(
-                    onClick = { viewModel.selectCategory(category) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = if (isSelected) {
-                            "✓ ${decodeHtml(category.name)}"
-                        } else {
-                            decodeHtml(category.name)
-                        }
-                    )
-                }
-            }
-        }
-
-        Text(
-            text = "Raskusaste: ${selectedDifficulty.name}",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Difficulty.entries.forEach { difficulty ->
-                OutlinedButton(
-                    onClick = { viewModel.selectDifficulty(difficulty) },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(difficulty.name)
-                }
-            }
-        }
-
-        Text(
-            text = "Küsimuste arv: $amount",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            listOf(5, 10, 15).forEach { value ->
-                OutlinedButton(
-                    onClick = { viewModel.updateAmount(value) },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(value.toString())
-                }
-            }
-        }
-
-        if (uiState.error != null) {
-            Text(
-                text = "Viga: ${uiState.error}",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        Button(
-            onClick = {
-                viewModel.startQuiz()
-                onStartQuiz()
-            },
-            enabled = selectedCategory != null && !uiState.isLoading,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-        ) {
-            Text(if (uiState.isLoading) "Laadimine..." else "Alusta mängu")
-        }
-
-        Button(
-            onClick = onOpenHistory,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-        ) {
-            Text("Vaata mängu ajalugu")
-        }
     }
 }

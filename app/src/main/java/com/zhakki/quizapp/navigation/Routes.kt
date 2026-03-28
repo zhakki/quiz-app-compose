@@ -1,9 +1,10 @@
-package com.zhakki.quizapp.data.navigation
+package com.zhakki.quizapp.navigation
 
 object Routes {
-    const val START = "start"
-    const val QUIZ = "quiz"
+    const val CATEGORY = "category"
+    const val GAME = "game"
     const val RESULT = "result"
     const val HISTORY = "history"
     const val LEADERBOARD = "leaderboard"
 }
+
