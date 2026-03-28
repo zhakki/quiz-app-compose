@@ -1,6 +1,5 @@
 package com.zhakki.quizapp.data.ui.history
 
-import android.text.Html
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,10 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhakki.quizapp.viewmodel.QuizViewModel
-
-private fun decodeHtml(text: String): String {
-    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
-}
 
 @Composable
 fun HistoryScreen(
@@ -75,7 +70,7 @@ fun HistoryScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "Kategooria: ${decodeHtml(item.category)}"
+                                text = "Kategooria: ${item.category}"
                             )
                             Text(
                                 text = "Tulemus: ${item.score} / ${item.totalQuestions}"

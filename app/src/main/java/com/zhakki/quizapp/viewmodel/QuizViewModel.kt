@@ -9,6 +9,13 @@ import com.zhakki.quizapp.data.local.QuizStateEntity
 import com.zhakki.quizapp.data.model.Category
 import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.data.repository.QuizRepository
+import com.zhakki.quizapp.ui.category.CategoryItemUi
+import com.zhakki.quizapp.ui.category.CategoryUiState
+import com.zhakki.quizapp.ui.history.HistoryItemUi
+import com.zhakki.quizapp.ui.history.HistoryUiState
+import com.zhakki.quizapp.ui.leaderboard.LeaderboardItemUi
+import com.zhakki.quizapp.ui.leaderboard.LeaderboardUiState
+import com.zhakki.quizapp.ui.result.ResultUiState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -35,6 +42,9 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
+    private val _selectedHistoryCategory = MutableStateFlow<String?>(null)
+    val selectedHistoryCategory: StateFlow<String?> = _selectedHistoryCategory.asStateFlow()
+
     // Mänguajalugu voona
     val gameHistory: StateFlow<List<GameResultEntity>> = repository.getGameHistory()
         .stateIn(
@@ -42,6 +52,36 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    // Ajaloo ekraani olek
+    val historyUiState: StateFlow<HistoryUiState> = combine(
+        gameHistory,
+        _selectedHistoryCategory
+    ) { history, selectedCategory ->
+        if (history.isEmpty()) {
+            HistoryUiState.Empty
+        } else {
+            val filteredHistory = if (selectedCategory == null) {
+                history
+            } else {
+                history.filter { it.category == selectedCategory }
+            }
+            HistoryUiState.Content(
+                items = filteredHistory.map {
+                    HistoryItemUi(
+                        id = it.id.toString(),
+                        title = "${it.category} - ${it.date}",
+                        subtitle = "Tulemus: ${it.score} / ${it.totalQuestions}"
+                    )
+                }
+            )
+        }
+    }
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HistoryUiState.Loading
+    )
 
     // Edetabel, tuletatud ajaloo põhjal
     val leaderboard: StateFlow<List<BestResult>> = gameHistory
@@ -57,6 +97,47 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+    // Leaderboardi ekraani olek
+    val leaderboardUiState: StateFlow<LeaderboardUiState> = leaderboard
+        .map { results ->
+            if (results.isEmpty()) {
+                LeaderboardUiState.Empty
+            } else {
+                LeaderboardUiState.Content(
+                    items = results.map {
+                        LeaderboardItemUi(
+                            id = it.category,
+                            name = it.category,
+                            scoreText = "Parim: ${it.bestScore}"
+                        )
+                    }
+                )
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = LeaderboardUiState.Loading
+        )
+
+    // Kategooria valiku ekraani olek
+    val categoryUiState: StateFlow<CategoryUiState> = _uiState
+        .map { state -> state.toCategoryUiState() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = CategoryUiState.Loading
+        )
+
+    // Tulemuste ekraani olek
+    val resultUiState: StateFlow<ResultUiState> = _uiState
+        .map { state -> state.toResultUiState() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ResultUiState.Loading
         )
 
     init {
@@ -120,7 +201,8 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         }
     }
 
-    fun selectCategory(category: Category) {
+    fun selectCategory(categoryId: String) {
+        val category = _uiState.value.categories.find { it.id.toString() == categoryId }
         _uiState.update { it.copy(selectedCategory = category) }
     }
 
@@ -263,5 +345,56 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             question.wrongAnswer2,
             question.wrongAnswer3
         ).filter { it.isNotEmpty() }.shuffled()
+    }
+
+    fun setHistoryCategoryFilter(category: String?) {
+        _selectedHistoryCategory.value = category
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            repository.clearGameHistory()
+        }
+    }
+
+    /**
+     * Teisendab QuizUiState -> CategoryUiState.
+     * See loogika on siin, et hoida UI-kiht puhas.
+     */
+    private fun QuizUiState.toCategoryUiState(): CategoryUiState {
+        return when {
+            isLoading && categories.isEmpty() -> CategoryUiState.Loading
+            error != null && categories.isEmpty() && !isLoading ->
+                CategoryUiState.Error(message = error.orEmpty())
+            !isLoading && categories.isEmpty() && error == null -> CategoryUiState.Empty
+            else -> CategoryUiState.Content(
+                title = "Choose a category",
+                categories = categories.map { CategoryItemUi(id = it.id.toString(), name = it.name) },
+                selectedCategoryId = selectedCategory?.id?.toString(),
+                selectedDifficulty = selectedDifficulty,
+                amount = amount,
+                amountOptions = listOf(5, 10, 15),
+                inlineError = error?.takeIf { categories.isNotEmpty() },
+                canStart = selectedCategory != null && !isLoading,
+                isStartInProgress = isLoading
+            )
+        }
+    }
+
+    private fun QuizUiState.toResultUiState(): ResultUiState {
+        return when {
+            isLoading && totalQuestions == 0 -> ResultUiState.Loading
+            error != null && totalQuestions == 0 && !isFinished ->
+                ResultUiState.Error(message = error.orEmpty())
+            totalQuestions == 0 -> ResultUiState.Empty
+            else -> ResultUiState.Content(
+                title = "Result",
+                summary = "Correct answers: $correctAnswersCount / $totalQuestions",
+                details = listOf(
+                    "Category" to (selectedCategory?.name ?: "—"),
+                    "Difficulty" to selectedDifficulty.name
+                )
+            )
+        }
     }
 }
