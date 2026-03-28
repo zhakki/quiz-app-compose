@@ -9,6 +9,8 @@ import com.zhakki.quizapp.data.local.QuizStateEntity
 import com.zhakki.quizapp.data.model.Category
 import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.data.repository.QuizRepository
+import com.zhakki.quizapp.ui.category.CategoryItemUi
+import com.zhakki.quizapp.ui.category.CategoryUiState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -57,6 +59,15 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+    // Kategooria valiku ekraani olek, tuletatud üldisest olekust
+    val categoryUiState: StateFlow<CategoryUiState> = _uiState
+        .map { state -> state.toCategoryUiState() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = CategoryUiState.Loading
         )
 
     init {
@@ -264,5 +275,29 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             question.wrongAnswer2,
             question.wrongAnswer3
         ).filter { it.isNotEmpty() }.shuffled()
+    }
+
+    /**
+     * Teisendab QuizUiState -> CategoryUiState.
+     * See loogika on siin, et hoida UI-kiht puhas.
+     */
+    private fun QuizUiState.toCategoryUiState(): CategoryUiState {
+        return when {
+            isLoading && categories.isEmpty() -> CategoryUiState.Loading
+            error != null && categories.isEmpty() && !isLoading ->
+                CategoryUiState.Error(message = error.orEmpty())
+            !isLoading && categories.isEmpty() && error == null -> CategoryUiState.Empty
+            else -> CategoryUiState.Content(
+                title = "Choose a category",
+                categories = categories.map { CategoryItemUi(id = it.id.toString(), name = it.name) },
+                selectedCategoryId = selectedCategory?.id?.toString(),
+                selectedDifficulty = selectedDifficulty,
+                amount = amount,
+                amountOptions = listOf(5, 10, 15),
+                inlineError = error?.takeIf { categories.isNotEmpty() },
+                canStart = selectedCategory != null && !isLoading,
+                isStartInProgress = isLoading
+            )
+        }
     }
 }

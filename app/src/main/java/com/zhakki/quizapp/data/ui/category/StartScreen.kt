@@ -3,10 +3,7 @@ package com.zhakki.quizapp.data.ui.category
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.zhakki.quizapp.ui.category.CategoryItemUi
 import com.zhakki.quizapp.ui.category.CategoryScreen
-import com.zhakki.quizapp.ui.category.CategoryUiState
-import com.zhakki.quizapp.viewmodel.QuizUiState
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
 /**
@@ -19,10 +16,10 @@ fun StartScreen(
     onOpenHistory: () -> Unit,
     onOpenLeaderboard: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val categoryState by viewModel.categoryUiState.collectAsState()
 
     CategoryScreen(
-        state = uiState.toCategoryUiState(),
+        state = categoryState,
         onCategoryClick = { id ->
             viewModel.selectCategory(id)
         },
@@ -38,24 +35,4 @@ fun StartScreen(
         leaderboardEnabled = false,
         onRetry = {}
     )
-}
-
-private fun QuizUiState.toCategoryUiState(): CategoryUiState {
-    return when {
-        isLoading && categories.isEmpty() -> CategoryUiState.Loading
-        error != null && categories.isEmpty() && !isLoading ->
-            CategoryUiState.Error(message = error.orEmpty())
-        !isLoading && categories.isEmpty() && error == null -> CategoryUiState.Empty
-        else -> CategoryUiState.Content(
-            title = "Choose a category",
-            categories = categories.map { CategoryItemUi(id = it.id.toString(), name = it.name) },
-            selectedCategoryId = selectedCategory?.id?.toString(),
-            selectedDifficulty = selectedDifficulty,
-            amount = amount,
-            amountOptions = listOf(5, 10, 15),
-            inlineError = error?.takeIf { categories.isNotEmpty() },
-            canStart = selectedCategory != null && !isLoading,
-            isStartInProgress = isLoading
-        )
-    }
 }
