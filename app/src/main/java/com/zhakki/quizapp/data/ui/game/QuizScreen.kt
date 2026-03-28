@@ -1,6 +1,5 @@
 package com.zhakki.quizapp.data.ui.game
 
-import android.text.Html
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,10 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhakki.quizapp.viewmodel.QuizViewModel
-
-private fun decodeHtml(text: String): String {
-    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
-}
 
 @Composable
 fun QuizScreen(
@@ -120,7 +115,7 @@ fun QuizScreen(
         )
 
         Text(
-            text = decodeHtml(question.questionText),
+            text = question.questionText,
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(top = 8.dp, bottom = 12.dp)
         )
@@ -130,7 +125,7 @@ fun QuizScreen(
                 onClick = { viewModel.onAnswerSelected(index) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(decodeHtml(answer))
+                Text(answer)
             }
         }
 
