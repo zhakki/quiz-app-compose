@@ -7,7 +7,7 @@ import com.zhakki.quizapp.ui.category.CategoryScreen
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
 /**
- * Точка интеграции с [QuizViewModel]: маппинг состояния в [CategoryUiState] и вызовы ViewModel из коллбэков UI.
+ * Toetuspunkt [QuizViewModel]: oleku kaardistamine [CategoryUiState]-iks ja ViewModeli kutsumine UI tagasisidelt.
  */
 @Composable
 fun StartScreen(
@@ -17,6 +17,8 @@ fun StartScreen(
     onOpenLeaderboard: () -> Unit
 ) {
     val categoryState by viewModel.categoryUiState.collectAsState()
+    val gameHistory by viewModel.gameHistory.collectAsState()
+    val leaderboard by viewModel.leaderboard.collectAsState()
 
     CategoryScreen(
         state = categoryState,
@@ -30,9 +32,9 @@ fun StartScreen(
             onStartQuiz()
         },
         onOpenHistory = onOpenHistory,
-        onOpenLeaderboard = {},
-        historyEnabled = true,
-        leaderboardEnabled = false,
+        onOpenLeaderboard = onOpenLeaderboard,
+        historyEnabled = gameHistory.isNotEmpty(),
+        leaderboardEnabled = leaderboard.isNotEmpty(),
         onRetry = {}
     )
 }
