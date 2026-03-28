@@ -11,6 +11,8 @@ import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.data.repository.QuizRepository
 import com.zhakki.quizapp.ui.category.CategoryItemUi
 import com.zhakki.quizapp.ui.category.CategoryUiState
+import com.zhakki.quizapp.ui.history.HistoryItemUi
+import com.zhakki.quizapp.ui.history.HistoryUiState
 import com.zhakki.quizapp.ui.leaderboard.LeaderboardItemUi
 import com.zhakki.quizapp.ui.leaderboard.LeaderboardUiState
 import com.zhakki.quizapp.ui.result.ResultUiState
@@ -40,6 +42,9 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
+    private val _selectedHistoryCategory = MutableStateFlow<String?>(null)
+    val selectedHistoryCategory: StateFlow<String?> = _selectedHistoryCategory.asStateFlow()
+
     // Mänguajalugu voona
     val gameHistory: StateFlow<List<GameResultEntity>> = repository.getGameHistory()
         .stateIn(
@@ -47,6 +52,36 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    // Ajaloo ekraani olek
+    val historyUiState: StateFlow<HistoryUiState> = combine(
+        gameHistory,
+        _selectedHistoryCategory
+    ) { history, selectedCategory ->
+        if (history.isEmpty()) {
+            HistoryUiState.Empty
+        } else {
+            val filteredHistory = if (selectedCategory == null) {
+                history
+            } else {
+                history.filter { it.category == selectedCategory }
+            }
+            HistoryUiState.Content(
+                items = filteredHistory.map {
+                    HistoryItemUi(
+                        id = it.id.toString(),
+                        title = "${it.category} - ${it.date}",
+                        subtitle = "Tulemus: ${it.score} / ${it.totalQuestions}"
+                    )
+                }
+            )
+        }
+    }
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HistoryUiState.Loading
+    )
 
     // Edetabel, tuletatud ajaloo põhjal
     val leaderboard: StateFlow<List<BestResult>> = gameHistory
@@ -310,6 +345,16 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             question.wrongAnswer2,
             question.wrongAnswer3
         ).filter { it.isNotEmpty() }.shuffled()
+    }
+
+    fun setHistoryCategoryFilter(category: String?) {
+        _selectedHistoryCategory.value = category
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            repository.clearGameHistory()
+        }
     }
 
     /**
