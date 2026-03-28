@@ -11,6 +11,8 @@ import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.data.repository.QuizRepository
 import com.zhakki.quizapp.ui.category.CategoryItemUi
 import com.zhakki.quizapp.ui.category.CategoryUiState
+import com.zhakki.quizapp.ui.leaderboard.LeaderboardItemUi
+import com.zhakki.quizapp.ui.leaderboard.LeaderboardUiState
 import com.zhakki.quizapp.ui.result.ResultUiState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -60,6 +62,29 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+    // Leaderboardi ekraani olek
+    val leaderboardUiState: StateFlow<LeaderboardUiState> = leaderboard
+        .map { results ->
+            if (results.isEmpty()) {
+                LeaderboardUiState.Empty
+            } else {
+                LeaderboardUiState.Content(
+                    items = results.map {
+                        LeaderboardItemUi(
+                            id = it.category,
+                            name = it.category,
+                            scoreText = "Parim: ${it.bestScore}"
+                        )
+                    }
+                )
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = LeaderboardUiState.Loading
         )
 
     // Kategooria valiku ekraani olek
@@ -287,6 +312,10 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         ).filter { it.isNotEmpty() }.shuffled()
     }
 
+    /**
+     * Teisendab QuizUiState -> CategoryUiState.
+     * See loogika on siin, et hoida UI-kiht puhas.
+     */
     private fun QuizUiState.toCategoryUiState(): CategoryUiState {
         return when {
             isLoading && categories.isEmpty() -> CategoryUiState.Loading
