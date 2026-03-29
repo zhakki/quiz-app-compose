@@ -1,24 +1,33 @@
 package com.zhakki.quizapp.ui.history
 
+import android.text.Html
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.zhakki.quizapp.ui.theme.QuizAppTheme
 
 sealed interface HistoryUiState {
     data object Loading : HistoryUiState
@@ -33,78 +42,189 @@ data class HistoryItemUi(
     val subtitle: String?
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+private fun decodeDisplayText(text: String): String {
+    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+}
+
 @Composable
 fun HistoryScreen(
     state: HistoryUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("History") }
+    QuizAppTheme(darkTheme = isSystemInDarkTheme()) {
+        val scheme = MaterialTheme.colorScheme
+        val screenBg = Brush.verticalGradient(
+            colors = listOf(
+                scheme.primaryContainer.copy(alpha = 0.52f),
+                scheme.surface
             )
-        }
-    ) { padding ->
-        Column(
+        )
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .systemBarsPadding()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .background(screenBg)
         ) {
-            when (state) {
-                HistoryUiState.Loading -> {
-                    Text("Loading...", style = MaterialTheme.typography.titleMedium)
-                }
-
-                is HistoryUiState.Error -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 22.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "Error: ${state.message}",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.titleMedium
+                        text = "History",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = scheme.onSurface
                     )
-                    Button(onClick = onRetry) { Text("Retry") }
-                    OutlinedButton(onClick = onBack) { Text("Back") }
+                    Text(
+                        text = "Your past quiz rounds",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = scheme.onSurfaceVariant
+                    )
                 }
 
-                HistoryUiState.Empty -> {
-                    Text("History is empty", style = MaterialTheme.typography.titleMedium)
-                    OutlinedButton(onClick = onBack) { Text("Back") }
-                }
+                when (state) {
+                    HistoryUiState.Loading -> {
+                        Text(
+                            "Loading...",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = scheme.onSurfaceVariant
+                        )
+                    }
 
-                is HistoryUiState.Content -> {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(bottom = 12.dp)
-                    ) {
-                        items(state.items) { item ->
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = item.title,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                item.subtitle?.let {
-                                    Text(
-                                        text = it,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                    is HistoryUiState.Error -> {
+                        Text(
+                            text = "Error: ${state.message}",
+                            color = scheme.error,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Button(
+                            onClick = onRetry,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = scheme.primary,
+                                contentColor = scheme.onPrimary
+                            )
+                        ) { Text("Retry") }
+                        Button(
+                            onClick = onBack,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = scheme.primary,
+                                contentColor = scheme.onPrimary
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            Text(
+                                text = "Back",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    HistoryUiState.Empty -> {
+                        Text(
+                            "History is empty",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = scheme.onSurfaceVariant
+                        )
+                        Button(
+                            onClick = onBack,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = scheme.primary,
+                                contentColor = scheme.onPrimary
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            Text(
+                                text = "Back",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    is HistoryUiState.Content -> {
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = 12.dp)
+                        ) {
+                            items(
+                                items = state.items,
+                                key = { it.id }
+                            ) { item ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = scheme.surface.copy(alpha = 0.96f)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Text(
+                                            text = decodeDisplayText(item.title),
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = scheme.onSurface
+                                        )
+                                        item.subtitle?.let { sub ->
+                                            val parts = sub.split("\n", limit = 2)
+                                            if (parts.size >= 2) {
+                                                Text(
+                                                    text = decodeDisplayText(parts[0].trim()),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = scheme.onSurfaceVariant
+                                                )
+                                                Text(
+                                                    text = decodeDisplayText(parts[1].trim()),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = scheme.primary
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = decodeDisplayText(sub),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = scheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = onBack,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = scheme.primary,
+                                contentColor = scheme.onPrimary
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            Text(
+                                text = "Back",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Back") }
                 }
             }
         }
