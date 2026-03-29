@@ -32,3 +32,7 @@ A simple Android app that uses the Trivia Quiz API as a source of quiz questions
 1. Zinaida Romanova 231803EDTR - geisterin - role: UI / Layout / Screens
 1. Ilona Žakovitš 231818EDTR - zhakki - role: Room / local database / history / leaderboard
 1. Margus Apinis 231788EDTR - maapin - role: Retrofit / MVVM / Business Logic
+## App Screenshots
+![Start Screen](img/001.png "Start Screen")
+![History Screen](img/002.png "History Screen")
+![Leaderboard Screen](img/003.png "Leaderboard Screen")
