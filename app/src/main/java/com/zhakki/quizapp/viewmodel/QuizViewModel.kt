@@ -206,8 +206,25 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         _uiState.update { it.copy(selectedCategory = category) }
     }
 
+    private fun selectCategory(category: Category) {
+        _uiState.update { it.copy(selectedCategory = category) }
+    }
+
     fun selectDifficulty(difficulty: Difficulty) {
         _uiState.update { it.copy(selectedDifficulty = difficulty) }
+    }
+
+    fun selectCategoryById(categoryId: String) {
+        val category = _uiState.value.categories.firstOrNull {
+            it.id.toString() == categoryId
+        }
+        if (category != null) {
+            selectCategory(category)
+        }
+    }
+
+    fun retryCategory() {
+        fetchCategories()
     }
 
     fun updateAmount(newAmount: Int) {
