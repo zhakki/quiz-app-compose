@@ -1,6 +1,5 @@
 package com.zhakki.quizapp.ui.leaderboard
 
-import android.text.Html
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -45,17 +44,6 @@ data class LeaderboardItemUi(
     val name: String,
     val scoreText: String
 )
-
-private fun decodeDisplayText(text: String): String {
-    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
-}
-
-private fun medalForRank(index: Int): String = when (index) {
-    0 -> "\uD83E\uDD47 " // 🥇
-    1 -> "\uD83E\uDD48 " // 🥈
-    2 -> "\uD83E\uDD49 " // 🥉
-    else -> ""
-}
 
 @Composable
 fun LeaderboardScreen(
@@ -234,11 +222,7 @@ fun LeaderboardScreen(
                                             )
                                         ) {
                                             Text(
-                                                text = if (isTopThree) {
-                                                    medalForRank(index) + "${index + 1}."
-                                                } else {
-                                                    "${index + 1}."
-                                                },
+                                                text = "${index + 1}.",
                                                 style = when {
                                                     isFirst -> MaterialTheme.typography.titleLarge
                                                     isTopThree -> MaterialTheme.typography.titleMedium
@@ -253,7 +237,7 @@ fun LeaderboardScreen(
                                                 }
                                             )
                                             Text(
-                                                text = decodeDisplayText(item.name),
+                                                text = item.name,
                                                 style = when {
                                                     isFirst -> MaterialTheme.typography.titleLarge
                                                     isTopThree -> MaterialTheme.typography.titleMedium
@@ -272,7 +256,7 @@ fun LeaderboardScreen(
                                             )
                                         }
                                         Text(
-                                            text = decodeDisplayText(item.scoreText),
+                                            text = item.scoreText,
                                             style = when {
                                                 isFirst -> MaterialTheme.typography.headlineSmall
                                                 isSecondOrThird -> MaterialTheme.typography.titleMedium

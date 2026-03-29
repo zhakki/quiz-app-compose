@@ -1,6 +1,5 @@
 package com.zhakki.quizapp.ui.history
 
-import android.text.Html
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -41,10 +40,6 @@ data class HistoryItemUi(
     val title: String,
     val subtitle: String?
 )
-
-private fun decodeDisplayText(text: String): String {
-    return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
-}
 
 @Composable
 fun HistoryScreen(
@@ -176,32 +171,17 @@ fun HistoryScreen(
                                         verticalArrangement = Arrangement.spacedBy(10.dp)
                                     ) {
                                         Text(
-                                            text = decodeDisplayText(item.title),
+                                            text = item.title,
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.SemiBold,
                                             color = scheme.onSurface
                                         )
                                         item.subtitle?.let { sub ->
-                                            val parts = sub.split("\n", limit = 2)
-                                            if (parts.size >= 2) {
-                                                Text(
-                                                    text = decodeDisplayText(parts[0].trim()),
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = scheme.onSurfaceVariant
-                                                )
-                                                Text(
-                                                    text = decodeDisplayText(parts[1].trim()),
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = scheme.primary
-                                                )
-                                            } else {
-                                                Text(
-                                                    text = decodeDisplayText(sub),
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    color = scheme.onSurfaceVariant
-                                                )
-                                            }
+                                            Text(
+                                                text = sub,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = scheme.onSurfaceVariant
+                                            )
                                         }
                                     }
                                 }
