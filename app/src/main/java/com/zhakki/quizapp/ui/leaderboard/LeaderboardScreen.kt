@@ -17,8 +17,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zhakki.quizapp.viewmodel.QuizViewModel
 
 sealed interface LeaderboardUiState {
     data object Loading : LeaderboardUiState
@@ -33,9 +36,22 @@ data class LeaderboardItemUi(
     val scoreText: String
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaderboardScreen(
+    viewModel: QuizViewModel,
+    onBack: () -> Unit
+) {
+    val state by viewModel.leaderboardUiState.collectAsState()
+    LeaderboardContent(
+        state = state,
+        onBack = onBack,
+        onRetry = { /* implement retry if needed */ }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LeaderboardContent(
     state: LeaderboardUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit
@@ -43,7 +59,7 @@ fun LeaderboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Leaderboard") }
+                title = { Text("Edetabel") }
             )
         }
     ) { padding ->
@@ -57,22 +73,22 @@ fun LeaderboardScreen(
         ) {
             when (state) {
                 LeaderboardUiState.Loading -> {
-                    Text("Loading...", style = MaterialTheme.typography.titleMedium)
+                    Text("Laadimine...", style = MaterialTheme.typography.titleMedium)
                 }
 
                 is LeaderboardUiState.Error -> {
                     Text(
-                        text = "Error: ${state.message}",
+                        text = "Viga: ${state.message}",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Button(onClick = onRetry) { Text("Retry") }
-                    OutlinedButton(onClick = onBack) { Text("Back") }
+                    Button(onClick = onRetry) { Text("Uuesti") }
+                    OutlinedButton(onClick = onBack) { Text("Tagasi") }
                 }
 
                 LeaderboardUiState.Empty -> {
-                    Text("No results yet", style = MaterialTheme.typography.titleMedium)
-                    OutlinedButton(onClick = onBack) { Text("Back") }
+                    Text("Andmed puuduvad", style = MaterialTheme.typography.titleMedium)
+                    OutlinedButton(onClick = onBack) { Text("Tagasi") }
                 }
 
                 is LeaderboardUiState.Content -> {
@@ -91,7 +107,7 @@ fun LeaderboardScreen(
                     OutlinedButton(
                         onClick = onBack,
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Back") }
+                    ) { Text("Tagasi") }
                 }
             }
         }

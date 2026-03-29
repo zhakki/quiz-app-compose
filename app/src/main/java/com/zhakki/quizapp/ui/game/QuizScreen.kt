@@ -1,4 +1,4 @@
-package com.zhakki.quizapp.data.ui.game
+package com.zhakki.quizapp.ui.game
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +44,7 @@ fun QuizScreen(
                 .padding(16.dp)
         ) {
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Laadimine...")
+            Text("Loading...")
         }
         return
     }
@@ -59,7 +59,7 @@ fun QuizScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Viga: ${uiState.error}",
+                text = "Error: ${uiState.error}",
                 color = MaterialTheme.colorScheme.error
             )
 
@@ -67,7 +67,7 @@ fun QuizScreen(
                 onClick = onBackToStart,
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text("Tagasi")
+                Text("Back")
             }
         }
         return
@@ -82,13 +82,13 @@ fun QuizScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Küsimusi ei ole")
+            Text("No questions available")
 
             Button(
                 onClick = onBackToStart,
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text("Tagasi")
+                Text("Back")
             }
         }
         return
@@ -105,12 +105,12 @@ fun QuizScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Viktoriin on alanud",
+            text = "Quiz has started",
             style = MaterialTheme.typography.titleMedium
         )
 
         Text(
-            text = "Küsimus ${uiState.currentQuestionIndex + 1} / ${uiState.totalQuestions}",
+            text = "Question ${uiState.currentQuestionIndex + 1} / ${uiState.totalQuestions}",
             style = MaterialTheme.typography.titleSmall
         )
 
@@ -136,7 +136,7 @@ fun QuizScreen(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Katkesta mäng")
+            Text("Cancel Game")
         }
     }
 }

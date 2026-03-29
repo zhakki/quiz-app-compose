@@ -16,8 +16,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zhakki.quizapp.viewmodel.QuizViewModel
 
 sealed interface ResultUiState {
     data object Loading : ResultUiState
@@ -30,9 +33,23 @@ sealed interface ResultUiState {
     ) : ResultUiState
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultScreen(
+    viewModel: QuizViewModel,
+    onPlayAgain: () -> Unit
+) {
+    val state by viewModel.resultUiState.collectAsState()
+    ResultContent(
+        state = state,
+        onPlayAgain = onPlayAgain,
+        onBack = onPlayAgain,
+        onRetry = { /* implement retry if needed */ }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ResultContent(
     state: ResultUiState,
     onPlayAgain: () -> Unit,
     onBack: () -> Unit,

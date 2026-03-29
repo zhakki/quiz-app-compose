@@ -1,13 +1,12 @@
-package com.zhakki.quizapp.data.ui.category
+package com.zhakki.quizapp.ui.category
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.zhakki.quizapp.ui.category.CategoryScreen
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
 /**
- * Toetuspunkt [QuizViewModel]: oleku kaardistamine [CategoryUiState]-iks ja ViewModeli kutsumine UI tagasisidelt.
+ * StartScreen ühendab [QuizViewModel] andmed [CategoryScreen] vaatega.
  */
 @Composable
 fun StartScreen(

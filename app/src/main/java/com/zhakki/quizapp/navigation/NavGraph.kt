@@ -5,11 +5,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.zhakki.quizapp.data.ui.category.StartScreen
-import com.zhakki.quizapp.data.ui.game.QuizScreen
-import com.zhakki.quizapp.data.ui.history.HistoryScreen
-import com.zhakki.quizapp.data.ui.leaderboard.LeaderboardScreen
-import com.zhakki.quizapp.data.ui.result.ResultScreen
+import com.zhakki.quizapp.ui.category.StartScreen
+import com.zhakki.quizapp.ui.game.QuizScreen
+import com.zhakki.quizapp.ui.history.HistoryScreen
+import com.zhakki.quizapp.ui.leaderboard.LeaderboardScreen
+import com.zhakki.quizapp.ui.result.ResultScreen
 import com.zhakki.quizapp.viewmodel.QuizViewModel
 
 @Composable
