@@ -11,6 +11,7 @@ import com.zhakki.quizapp.data.model.Difficulty
 import com.zhakki.quizapp.data.repository.QuizRepository
 import com.zhakki.quizapp.ui.category.CategoryItemUi
 import com.zhakki.quizapp.ui.category.CategoryUiState
+import com.zhakki.quizapp.ui.game.GameUiState
 import com.zhakki.quizapp.ui.history.HistoryItemUi
 import com.zhakki.quizapp.ui.history.HistoryUiState
 import com.zhakki.quizapp.ui.leaderboard.LeaderboardItemUi
@@ -71,7 +72,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                     HistoryItemUi(
                         id = it.id.toString(),
                         title = "${it.category} - ${it.date}",
-                        subtitle = "Tulemus: ${it.score} / ${it.totalQuestions}"
+                        subtitle = "Result: ${it.score} / ${it.totalQuestions}"
                     )
                 }
             )
@@ -110,7 +111,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                         LeaderboardItemUi(
                             id = it.category,
                             name = it.category,
-                            scoreText = "Parim: ${it.bestScore}"
+                            scoreText = "Best: ${it.bestScore}"
                         )
                     }
                 )
@@ -129,6 +130,15 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = CategoryUiState.Loading
+        )
+
+    // Mängu ekraani olek
+    val gameUiState: StateFlow<GameUiState> = _uiState
+        .map { state -> state.toGameUiState() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = GameUiState.Loading
         )
 
     // Tulemuste ekraani olek
@@ -194,7 +204,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "Kategooriate laadimine ebaõnnestus"
+                        error = e.message ?: "Failed to load categories"
                     )
                 }
             }
@@ -206,8 +216,25 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         _uiState.update { it.copy(selectedCategory = category) }
     }
 
+    private fun selectCategory(category: Category) {
+        _uiState.update { it.copy(selectedCategory = category) }
+    }
+
     fun selectDifficulty(difficulty: Difficulty) {
         _uiState.update { it.copy(selectedDifficulty = difficulty) }
+    }
+
+    fun selectCategoryById(categoryId: String) {
+        val category = _uiState.value.categories.firstOrNull {
+            it.id.toString() == categoryId
+        }
+        if (category != null) {
+            selectCategory(category)
+        }
+    }
+
+    fun retryCategory() {
+        fetchCategories()
     }
 
     fun updateAmount(newAmount: Int) {
@@ -357,10 +384,6 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Teisendab QuizUiState -> CategoryUiState.
-     * See loogika on siin, et hoida UI-kiht puhas.
-     */
     private fun QuizUiState.toCategoryUiState(): CategoryUiState {
         return when {
             isLoading && categories.isEmpty() -> CategoryUiState.Loading
@@ -373,7 +396,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                 selectedCategoryId = selectedCategory?.id?.toString(),
                 selectedDifficulty = selectedDifficulty,
                 amount = amount,
-                amountOptions = listOf(5, 10, 15),
+                amountOptions = listOf(5, 10, 15, 20),
                 inlineError = error?.takeIf { categories.isNotEmpty() },
                 canStart = selectedCategory != null && !isLoading,
                 isStartInProgress = isLoading
@@ -381,20 +404,42 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         }
     }
 
+    private fun QuizUiState.toGameUiState(): GameUiState {
+        if (isFinished) return GameUiState.Empty
+        if (isLoading && currentQuestion == null) return GameUiState.Loading
+        if (error != null && currentQuestion == null) return GameUiState.Error(error.orEmpty())
+
+        val question = currentQuestion ?: return GameUiState.Empty
+
+        return GameUiState.Content(
+            questionNumber = currentQuestionIndex + 1,
+            totalQuestions = totalQuestions.coerceAtLeast(1),
+            questionText = question.questionText,
+            answers = currentAnswers,
+            progress = if (totalQuestions > 0) {
+                (currentQuestionIndex + 1).toFloat() / totalQuestions.toFloat()
+            } else {
+                0f
+            },
+            correctAnswers = correctAnswersCount
+        )
+    }
+
     private fun QuizUiState.toResultUiState(): ResultUiState {
-        return when {
-            isLoading && totalQuestions == 0 -> ResultUiState.Loading
-            error != null && totalQuestions == 0 && !isFinished ->
-                ResultUiState.Error(message = error.orEmpty())
-            totalQuestions == 0 -> ResultUiState.Empty
-            else -> ResultUiState.Content(
-                title = "Result",
-                summary = "Correct answers: $correctAnswersCount / $totalQuestions",
-                details = listOf(
-                    "Category" to (selectedCategory?.name ?: "—"),
-                    "Difficulty" to selectedDifficulty.name
-                )
+        if (!isFinished) return ResultUiState.Loading
+        if (totalQuestions == 0) return ResultUiState.Empty
+
+        val categoryName = selectedCategory?.name ?: currentQuestion?.category ?: "Quiz"
+
+        return ResultUiState.Content(
+            title = "Quiz finished",
+            summary = "Correct answers: $correctAnswersCount / $totalQuestions",
+            details = listOf(
+                "Category" to categoryName,
+                "Difficulty" to selectedDifficulty.name,
+                "Total Questions" to totalQuestions.toString(),
+                "Correct Answers" to correctAnswersCount.toString()
             )
-        }
+        )
     }
 }

@@ -1,79 +1,118 @@
 package com.zhakki.quizapp.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.zhakki.quizapp.data.ui.category.StartScreen
-import com.zhakki.quizapp.data.ui.game.QuizScreen
-import com.zhakki.quizapp.data.ui.history.HistoryScreen
-import com.zhakki.quizapp.data.ui.leaderboard.LeaderboardScreen
-import com.zhakki.quizapp.data.ui.result.ResultScreen
-import com.zhakki.quizapp.viewmodel.QuizViewModel
+import com.zhakki.quizapp.data.model.Difficulty
+import com.zhakki.quizapp.ui.category.CategoryScreen
+import com.zhakki.quizapp.ui.category.CategoryUiState
+import com.zhakki.quizapp.ui.game.GameScreen
+import com.zhakki.quizapp.ui.game.GameUiState
+import com.zhakki.quizapp.ui.history.HistoryScreen
+import com.zhakki.quizapp.ui.history.HistoryUiState
+import com.zhakki.quizapp.ui.leaderboard.LeaderboardScreen
+import com.zhakki.quizapp.ui.leaderboard.LeaderboardUiState
+import com.zhakki.quizapp.ui.result.ResultScreen
+import com.zhakki.quizapp.ui.result.ResultUiState
 
 @Composable
-fun AppNavGraph(
-    quizViewModel: QuizViewModel,
-    navController: NavHostController = rememberNavController()
+fun NavGraph(
+    startDestination: String = Routes.CATEGORY,
+    categoryState: CategoryUiState = CategoryUiState.Loading,
+    gameState: GameUiState = GameUiState.Loading,
+    resultState: ResultUiState = ResultUiState.Empty,
+    historyState: HistoryUiState = HistoryUiState.Empty,
+    leaderboardState: LeaderboardUiState = LeaderboardUiState.Empty,
+    isQuizFinished: Boolean = false,
+    onCategorySelected: (String) -> Unit = {},
+    onDifficultySelected: (Difficulty) -> Unit = {},
+    onAmountSelected: (Int) -> Unit = {},
+    onStartGame: () -> Unit = {},
+    onAnswerSelected: (Int) -> Unit = {},
+    onCancelGame: () -> Unit = {},
+    onPlayAgain: () -> Unit = {},
+    onRetryCategory: () -> Unit = {},
+    onRetryGame: () -> Unit = {},
+    onRetryResult: () -> Unit = {},
+    onRetryHistory: () -> Unit = {},
+    onRetryLeaderboard: () -> Unit = {},
+    historyEnabled: Boolean = true,
+    leaderboardEnabled: Boolean = true
 ) {
+    val navController = rememberNavController()
+
     NavHost(
         navController = navController,
-        startDestination = Routes.START
+        startDestination = startDestination
     ) {
-        composable(Routes.START) {
-            StartScreen(
-                viewModel = quizViewModel,
-                onStartQuiz = {
-                    navController.navigate(Routes.QUIZ)
+        composable(Routes.CATEGORY) {
+            CategoryScreen(
+                state = categoryState,
+                onCategoryClick = onCategorySelected,
+                onDifficultySelected = onDifficultySelected,
+                onAmountSelected = onAmountSelected,
+                onStartClick = {
+                    onStartGame()
+                    navController.navigate(Routes.GAME)
                 },
-                onOpenHistory = {
-                    navController.navigate(Routes.HISTORY)
-                },
-                onOpenLeaderboard = {
-                    navController.navigate(Routes.LEADERBOARD)
-                }
+                onOpenHistory = { navController.navigate(Routes.HISTORY) },
+                onOpenLeaderboard = { navController.navigate(Routes.LEADERBOARD) },
+                historyEnabled = historyEnabled,
+                leaderboardEnabled = leaderboardEnabled,
+                onRetry = onRetryCategory
             )
         }
 
-        composable(Routes.QUIZ) {
-            QuizScreen(
-                viewModel = quizViewModel,
-                onFinishQuiz = {
+        composable(Routes.GAME) {
+            LaunchedEffect(isQuizFinished) {
+                if (isQuizFinished) {
                     navController.navigate(Routes.RESULT) {
-                        popUpTo(Routes.START)
+                        popUpTo(Routes.GAME) { inclusive = true }
+                        launchSingleTop = true
                     }
-                },
-                onBackToStart = {
-                    navController.popBackStack(Routes.START, false)
                 }
+            }
+
+            GameScreen(
+                state = gameState,
+                onAnswerClick = onAnswerSelected,
+                onCancel = {
+                    onCancelGame()
+                    navController.popBackStack(Routes.CATEGORY, false)
+                },
+                onRetry = onRetryGame
             )
         }
 
         composable(Routes.RESULT) {
             ResultScreen(
-                viewModel = quizViewModel,
+                state = resultState,
                 onPlayAgain = {
-                    navController.popBackStack(Routes.START, false)
-                }
+                    onPlayAgain()
+                    navController.popBackStack(Routes.CATEGORY, false)
+                },
+                onBack = {
+                    navController.popBackStack(Routes.CATEGORY, false)
+                },
+                onRetry = onRetryResult
             )
         }
 
         composable(Routes.HISTORY) {
             HistoryScreen(
-                viewModel = quizViewModel,
-                onBack = {
-                    navController.popBackStack()
-                }
+                state = historyState,
+                onBack = { navController.popBackStack() },
+                onRetry = onRetryHistory
             )
         }
 
         composable(Routes.LEADERBOARD) {
             LeaderboardScreen(
-                viewModel = quizViewModel,
-                onBack = {
-                    navController.popBackStack()
-                }
+                state = leaderboardState,
+                onBack = { navController.popBackStack() },
+                onRetry = onRetryLeaderboard
             )
         }
     }

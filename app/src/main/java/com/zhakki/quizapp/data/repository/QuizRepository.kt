@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import com.zhakki.quizapp.data.local.BestResult
 
 class QuizRepository(
     private val localDataSource: LocalDataSource
@@ -151,6 +152,9 @@ class QuizRepository(
 
     fun getGameHistory(): Flow<List<GameResultEntity>> {
         return localDataSource.getGameHistory()
+    }
+    fun getBestResultsByCategory(): Flow<List<BestResult>> {
+        return localDataSource.getBestResultsByCategory()
     }
 
     suspend fun clearGameHistory() {
