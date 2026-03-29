@@ -59,7 +59,10 @@ class QuizRepository(
 
     suspend fun fetchCategories() {
         val response = apiService.getCategories()
-        _categories.value = response.categories
+        val decodedCategories = response.categories.map { category ->
+            category.copy(name = decodeHtml(category.name))
+        }
+        _categories.value = decodedCategories
     }
 
     private fun decodeHtml(html: String): String {
