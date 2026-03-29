@@ -100,7 +100,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                         }
                         LeaderboardItemUi(
                             id = it.category,
-                            name = "$medal${index + 1}. ${it.category}",
+                            name = "$medal${it.category}", // Eemaldatud järjekorranumber, et vältida topelt numbreid UI-s
                             scoreText = it.bestScore.toString()
                         )
                     }
