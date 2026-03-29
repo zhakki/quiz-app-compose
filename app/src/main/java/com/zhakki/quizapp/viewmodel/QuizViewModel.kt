@@ -100,7 +100,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                         }
                         LeaderboardItemUi(
                             id = it.category,
-                            name = "$medal${it.category}", // Eemaldatud järjekorranumber, et vältida topelt numbreid UI-s
+                            name = "$medal${it.category}",
                             scoreText = it.bestScore.toString()
                         )
                     }
@@ -304,9 +304,10 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     }
 
     private fun QuizUiState.toGameUiState(): GameUiState {
-        if (isFinished) return GameUiState.Empty
         if (isLoading && currentQuestion == null) return GameUiState.Loading
+        
         val q = currentQuestion ?: return GameUiState.Empty
+
         return GameUiState.Content(
             questionNumber = currentQuestionIndex + 1,
             totalQuestions = totalQuestions,
