@@ -78,11 +78,11 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
             )
         }
     }
-    .stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = HistoryUiState.Loading
-    )
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = HistoryUiState.Loading
+        )
 
     // Edetabel, tuletatud ajaloo põhjal
     val leaderboard: StateFlow<List<BestResult>> = gameHistory
@@ -405,7 +405,7 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
     }
 
     private fun QuizUiState.toGameUiState(): GameUiState {
-        if (isFinished) return GameUiState.Empty
+        if (isFinished) return GameUiState.Finishing
         if (isLoading && currentQuestion == null) return GameUiState.Loading
         if (error != null && currentQuestion == null) return GameUiState.Error(error.orEmpty())
 
@@ -443,3 +443,4 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
         )
     }
 }
+

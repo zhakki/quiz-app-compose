@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 
 sealed interface GameUiState {
     data object Loading : GameUiState
+    /** Quiz finished; UI stays blank until navigation to result (avoid flashing Empty). */
+    data object Finishing : GameUiState
     data class Error(val message: String) : GameUiState
     data object Empty : GameUiState
     data class Content(
@@ -60,6 +62,10 @@ fun GameScreen(
             when (state) {
                 GameUiState.Loading -> {
                     Text("Loading...", style = MaterialTheme.typography.titleMedium)
+                }
+
+                GameUiState.Finishing -> {
+                    /* no placeholder text — NavGraph navigates to RESULT */
                 }
 
                 is GameUiState.Error -> {
